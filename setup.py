@@ -17,7 +17,7 @@ setup(
         install_requires=['numpy', 'qutip'], # add any additional packages that 
         # needs to be installed along with your package. Eg: 'caer'
         
-        keywords=['python', 'first package'],
+        keywords=['python', 'quantum control'],
         classifiers= [
             "Development Status :: 3 - Alpha",
             "Intended Audience :: Education",

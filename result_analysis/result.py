@@ -1,5 +1,5 @@
 from qaoaoqs.Dynamics import *
-import qaoaoqs.sys_setup
+import qaoaoqs.sys_setup as sys_setup
 from qaoaoqs.quantum_manager import *
 import qutip as qt
 """
@@ -72,9 +72,7 @@ class Result():
 			bath_init = np.identity(2**n, dtype='complex128') #unpolarized state of bath
 			bath_init /= 2**n #Normalize
 		else:
-			bath_init = np.random.rand(2**n).astype('complex128') #random initial state of bath
-			bath_init /= np.sqrt(bath_init.conj().T @ bath_init) #Normalize
-			bath_init = np.outer(bath_init, bath_init.conj().T)
+			bath_init = self.Haar_rd_state(n)
 		for _ in range(no_samples):
 			sys_init = self.Haar_rd_state(qubit_ct)
 
@@ -169,3 +167,44 @@ class Result():
 	def HA_fraction(self):
 		'''The Fraction of time applying H_A'''
 		self.data.insert(len(self.data.columns), 'HA_frac', sum(self.data['duration'].to_numpy()[0][0][0::2])/self.params.T_tot )
+
+	def GRK_fidelity(self, temp = 'zero',):
+		'''Optimal control theory for a unitary operation under dissipative evolution'''
+		quma = sys_setup.setup(self.params)
+		N_sys = len(quma.psi1)
+
+		# w= [20/22, 1/22, 1/22]
+		# rho1 = np.zeros(quma.psi1.shape)
+		# for i in range(N_sys):
+		# 	rho1[i,i] = 2*(N_sys-i)/(N_sys*(N_sys+1))
+		# rho_test = [rho1,
+		# 			np.ones(quma.psi1.shape)/N_sys,
+		# 			np.identity(N_sys)/N_sys]
+		rho_test = []
+		w= np.ones(N_sys+1)/(N_sys+1)
+		for i in range(N_sys):
+			rhoi = np.zeros(quma.psi1.shape)
+			rhoi[i,i] = 1
+			rho_test.append(rhoi)
+		rho_test.append(np.ones(quma.psi1.shape)/N_sys)
+
+
+		target_uni = quma.psi1
+		outputs = []
+		n = quma.n+quma.n2
+		if temp == 'zero':
+			bath_init = np.zeros((2**n, 2**n), dtype='complex128')
+			bath_init[0,0] = 1
+		elif temp == 'inf':
+			bath_init = np.identity(2**n, dtype='complex128') #unpolarized state of bath
+			bath_init /= 2**n #Normalize
+		else:
+			bath_init = self.Haar_rd_state(n)
+		for i in range(len(rho_test)):
+			rhoi = rho_test[i]
+			quma.reset(psi0 = np.kron(rhoi,bath_init))
+			quma.reset(psi1 = target_uni @ rhoi @ target_uni.conj().T)
+			outputs.append(np.real(quma.state_fidelity(self.data['duration'].to_numpy()[0][0]))* w[i]/ np.trace(rhoi@rhoi))
+		result = np.sum(outputs)
+		print(result)
+		self.data.insert(len(self.data.columns), 'GRK_fid_log', -np.log10(1 - result) )

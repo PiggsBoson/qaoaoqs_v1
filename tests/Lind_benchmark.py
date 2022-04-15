@@ -17,6 +17,8 @@ print("number of bath spins: ", n)
 A = np.ones(n)
 A *= 0.04 #40MHz
 omega = 8.0 #GHz
+T1_sys = 50#ns
+T1_TLS = 10#ns
 
 sys_init = np.array([[1.0,0.0], [0.0,0.0]])
 bath_init = np.zeros((2**n, 2**n), dtype='complex128')
@@ -44,7 +46,7 @@ H0 = H_d.toarray() + 2.0 * H_c.toarray()
 H1 = H_d.toarray() - 2.0 * H_c.toarray()
 
 decoherence_type = '-'
-gamma = [np.sqrt(1/5)] + [np.sqrt(1/1)]*n #sqrt(1/T1)
+gamma = [np.sqrt(1/T1_sys)] + [np.sqrt(1/T1_TLS)]*n #sqrt(1/T1)
 L = []
 for i in range(n+n_system):
     L_term = [[decoherence_type, [[gamma[i], i]] ]]
@@ -116,8 +118,12 @@ print("Method 1 numpy with vectorization: ", time.time() - start)
 
 """Method 3: qutip: """
 start = time.time()
-simulator3 = Dyna(rho0, H0, N=N, L = L, impl = 'qutip', t_steps = time_steps)
 t_tot = 0
+rho0 = qt.Qobj(rho0)
+H0 = qt.Qobj(H0)
+H1 = qt.Qobj(H1)
+L = [qt.Qobj(Li) for Li in L]
+simulator3 = Dyna(rho0, H0, N=N, L = L, impl = 'qutip', t_steps = time_steps)
 for _ in range(repeats):
     measured3= []
     start = time.time()

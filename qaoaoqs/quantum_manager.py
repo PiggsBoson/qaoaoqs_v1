@@ -2,7 +2,7 @@
 #Date Jan. 14 2020
 import numpy as np
 import scipy.linalg as la
-from Dynamics import *
+from qaoaoqs.Dynamics import *
 
 
 #Pauli matrices
@@ -59,19 +59,25 @@ class QuManager():
 		if args: 
 			self.impl = args.impl
 			self.n = args.env_dim
-			self.n2 = args.env_dim2
+			if hasattr(args,'env_dim2'):
+				self.n2 = args.env_dim2
+			else:
+				self.n2 = 0
 
 			self.fid_fix = args.fid_fix
 			self.fix_adj = args.fid_adj
-			self.renormal = args.protocol_renormal
-
-			
-			self.T_tot = args.T_tot
+			if hasattr(args,'protocol_renormal'):
+				self.renormal = args.protocol_renormal
+			else:
+				self.renormal = False
+			if hasattr(args,'T_tot'):
+				self.T_tot = args.T_tot
 			
 			self.testcase = args.testcase
 			self.return_uni = False
 			
-			self.ode_steps = args.ode_steps
+			if hasattr(args,'ode_steps'):
+				self.ode_steps = args.ode_steps
 
 		else:
 		#enables convenient implementation, especially for testing

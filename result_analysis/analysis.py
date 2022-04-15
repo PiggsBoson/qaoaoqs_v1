@@ -50,6 +50,9 @@ def plot_data(data, args):
 			elif args.option == 'state_fid':
 				line.set_label('Unitary')
 				plt.errorbar(args.x, 'state_fid_log' , yerr = 'state_fid_log_sd',ls = '-', marker = 'o', data = group, label = 'State', capsize = 5)
+			elif args.option == 'GRK':
+				line.set_label('Unitary')
+				plt.plot(args.x, 'GRK_fid_log',ls = '-', marker = 'o', data = group, label = 'GRK')
 			elif args.group_by == 'approach':
 				line.set_label(str(name).upper())
 
@@ -260,8 +263,8 @@ def get_datasets(fpath, args = None):
 			# datasets.insert(len(datasets.columns), 'no_opt', no_opt(datasets, params))
 		elif args.option == 'state_fid':
 			result.state_fid(args.temp, args.state_samples)
-			# print("The optimized fidelity is ", result.data["log_fid"].to_numpy()[0])
-			# print("The average result is", result.data["state_fid_log"].to_numpy()[0])
+		elif args.option == 'GRK':
+			result.GRK_fidelity(args.temp)
 
 	return result
 
@@ -281,7 +284,7 @@ def main():
 	parser.add_argument('--filter', choices=['p','n','lind_gamma'],default=None)
 	# parser.add_argument('--comparision', type=bool, default=False)
 	parser.add_argument('--title',type=str, default=None)
-	parser.add_argument('--option',choices=['plot', 'state_fid', 'comparison', 'plot_ab','plot_his','ani_his', 'Bapat'],default='plot')
+	parser.add_argument('--option',choices=['plot', 'state_fid', 'comparison', 'plot_ab','plot_his','ani_his', 'Bapat', 'GRK'],default='plot')
 	parser.add_argument('--temp',choices=['zero', 'inf', 'rand'],default='zero')
 	parser.add_argument('--state_samples', type = int, default=100)
 	parser.add_argument('--sanity_check',type=bool, default=False)

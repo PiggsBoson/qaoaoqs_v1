@@ -39,51 +39,39 @@ class QuManager():
 			renormal -- Whether renormalizing the protocol in computing the fidelity
 		"""
 		self.psi0 = psi0 #Added. Used for density matrix
-		self.psi0_input = np.expand_dims(psi0, axis=1)
 		self.imag_unit = np.complex64(1.0j)
 		self.psi1 = psi1# .reshape(psi1.shape[0], 1) #Change here
 
 		self.H1 = H1
 		self.H0 = H0
 
-		self.H0_eval, self.H0_evec = la.eigh(H0)
-		self.H0_eval = np.expand_dims(self.H0_eval, axis=-1) #This decomposition aids efficiency
+		# self.H0_eval, self.H0_evec = la.eigh(H0)
+		# self.H0_eval = np.expand_dims(self.H0_eval, axis=-1) #This decomposition aids efficiency
 
-		self.H1_eval, self.H1_evec = la.eigh(H1)
-		self.H1_eval = np.expand_dims(self.H1_eval, axis=-1) #This decomposition aids efficiency
+		# self.H1_eval, self.H1_evec = la.eigh(H1)
+		# self.H1_eval = np.expand_dims(self.H1_eval, axis=-1) #This decomposition aids efficiency
 
 		self.dyna_type = dyna_type
 		self.fid_type = fid_type
 		
 		self.couplings = couplings
 
-		self.H_ns1 = H_ns1
-		self.H_ns2 = H_ns2
-
 		if args: 
 			self.impl = args.impl
 			self.n = args.env_dim
-			if hasattr(args,'env_dim2'):
-				self.n2 = args.env_dim2
-			else:
-				self.n2 = 0
+			self.n2 = args.env_dim2
 
 			self.fid_fix = args.fid_fix
 			self.fix_adj = args.fid_adj
-			if hasattr(args,'protocol_renormal'):
-				self.renormal = args.protocol_renormal
-			else:
-				self.renormal = False
-			if hasattr(args,'T_tot'):
-				self.T_tot = args.T_tot
+			self.renormal = args.protocol_renormal
+
 			
-			self.gamma = args.lind_gamma #Dephasing rate
-			self.L = args.lind_L #Lindblad operator
-
-			self.delta = args.noise_delta
-
+			self.T_tot = args.T_tot
+			
 			self.testcase = args.testcase
 			self.return_uni = False
+			
+			self.ode_steps = args.ode_steps
 
 		else:
 		#enables convenient implementation, especially for testing
@@ -96,15 +84,16 @@ class QuManager():
 			self.fix_adj = kwargs.get('fix_adj', None)
 			self.T_tot = kwargs.get('T_tot',0)
 			
-			self.gamma = kwargs.get('lind_gamma',0)
-			self.L = kwargs.get('lind_L',0)
 
 			self.delta = kwargs.get('noise_delta',0)
 
 			self.testcase = kwargs.get('testcase')
 
 			self.return_uni = kwargs.get('return_uni', False)
+
 		
+		if self.dyna_type == 'lind_new':
+			self.simulator = Dyna(psi0, H0, N=2**(self.n+1), L = kwargs.get('lind_L',None), impl = self.impl, t_steps = args.ode_steps)
 	
 	def get_reward(self, protocol):
 		"""Get the fidelity of the protocol
@@ -125,33 +114,7 @@ class QuManager():
 		if self.fid_fix =='abs':
 			protocol = np.abs(protocol)
 
-		if self.dyna_type == 'lind':
-			u = np.copy(self.psi0)
-			u = np.outer(u, u.conj().T) #convert u to density matrix
-			if self.L == 'sz':
-				Li = sigma_z
-			elif self.L=='sx':
-				Li = sigma_x
-			elif self.L == 'sy':
-				Li = sigma_y
-
-			if self.impl == 'vec':
-				uv = u.reshape((-1, 1), order='F')#vectorize
-				simulator = Dyna(uv , self.H0, u.shape[0], self.gamma, Li, self.impl)
-				for i in range(len(protocol)):
-					if i % 2 == 0:
-						simulator.setH(self.H0)
-						uv = simulator.simulate_lind_vec(protocol[i])
-					else:
-						simulator.setH(self.H1)
-						uv = simulator.simulate_lind_vec(protocol[i])
-				u = uv.reshape(u.shape, order='F')
-				if self.fid_fix =='barrier':
-					result = np.absolute(self.psi1.conj().T @ u @ self.psi1)[0,0] - 100000000.0 * int(np.any([t<0 for t in protocol]))#Note this enumeration method for np.matrix
-				else:
-					result = np.absolute(self.psi1.conj().T @ u @ self.psi1)[0,0] #Note this enumeration method for np.matrix
-
-		elif self.dyna_type == 'cs':
+		if self.dyna_type == 'cs':
 			u = np.copy(self.psi0)
 			simulator = Dyna(u , self.H0)
 			for i in range(len(protocol)):
@@ -186,7 +149,13 @@ class QuManager():
 					result = result - 100000000.0 * int(np.any([t<0 for t in protocol]))
 
 		elif self.dyna_type == 'lind_new':
-			pass
+			for i in range(len(protocol)):
+				if i % 2 == 0:
+					self.simulator.setH(self.H0)
+					self.simulator.simulate_lind_qutip(protocol[i])
+				else:
+					self.simulator.setH(self.H1)
+					self.simulator.simulate_lind_qutip(protocol[i])
 							
 		if self.fix_adj =='t':
 			# if np.sum(protocol) >= 1:
@@ -253,109 +222,6 @@ class QuManager():
 			# 	self.H1_eval, self.H1_evec = la.eigh(self.H1)
 			# 	self.H1_eval = np.expand_dims(self.H1_eval, axis=-1) #This decomposition aids efficiency
 		
-
-	def get_reward_ns_cs1(self, protocol, ns):
-		"""Get the fidelity with the noise on the coupling between the system and the bath qubits
-
-		Arguments:
-			protocol {list} -- protocol
-			ns {scalar} -- the number of noise to sample 
-
-		Returns:
-			sampled mean fildelity, sampled min fidelity -- scalar between 0 and 1 
-		"""
-		from quspin.basis import spin_basis_1d
-		from quspin.operators import hamiltonian
-		
-		n = self.n
-		#TODO: modify this!
-		delta = self.delta
-		l_w = np.random.uniform(low=-delta, high=delta, size=(ns,n))
-
-		l_fid = []
-
-		for w in l_w:
-			# compute Hilbert space basis
-			basis = spin_basis_1d(L = n+1)
-			
-			# compute site-coupling lists
-			couple_term = [[w[i], 0, i+1] for i in range(n)]
-
-			#operator string lists
-			static_n = [['zz', couple_term], 
-						['xx', couple_term], ['yy', couple_term]]
-			#The drifting Hamiltonian
-			H_n = hamiltonian(static_n, [], basis=basis, dtype=np.float64, check_symm=False, check_herm=False, check_pcon=False)
-
-			#QAOA Hamiltonians
-			H0 = self.H0 + H_n.toarray() 
-			H1 = self.H1 + H_n.toarray()
-
-			u = np.copy(self.psi0)
-			simulator = Dyna(u , self.H0)
-			for i in range(len(protocol)):
-				if i % 2 == 0:
-					simulator.setH(H0)
-					u = simulator.simulate_closed(protocol[i])
-				else:
-					simulator.setH(H1)
-					u = simulator.simulate_closed(protocol[i])
-			#The fidelity follows that defined by Arenz et al.
-			N = 2**self.n #size of bath space
-			u_f = np.matrix(np.kron(self.psi1, np.identity(N)))
-			Q = u_f.getH() @ u 
-			Q = Q[ :N, :N] + Q[N: , N: ] #partial trace
-			resultw	= np.absolute(np.trace(la.sqrtm(Q.getH() @ Q)) / (2*N)) ** 2
-			l_fid.append(resultw)
-
-		result = np.min(l_fid)
-		if self.fid_fix =='barrier':
-			result -= 100000000.0 * int(np.any([t<0 for t in protocol]))#Note this enumeration method for np.matrix
-		return result
-
-	def get_reward_ns_lind(self, protocol, ns):
-		"""Get the fidelity with the noise on the Lindblad dephasing rate
-
-		Arguments:
-			protocol {list} -- protocol
-			ns {scalar} -- the number of noise to sample 
-
-		Returns:
-			sampled mean fildelity, sampled min fidelity -- scalar between 0 and 1 
-		"""
-		delta = self.delta
-		l_w = np.random.uniform(low=-delta, high=delta, size=ns)
-
-		l_fid = []
-
-		for w in l_w: #Need to use zip() here? 
-			u = np.copy(self.psi0)
-			u = np.outer(u, u.conj().T) #convert u to density matrix
-			if self.L == 'sz':
-				Li = sigma_z
-			elif self.L=='sx':
-				Li = sigma_x
-			elif self.L == 'sy':
-				Li = sigma_y
-			
-			uv = u.reshape((-1, 1), order='F')#vectorize
-			simulator = Dyna(uv , self.H0, u.shape[0], self.gamma + w, Li, self.impl)
-			for i in range(len(protocol)):
-				if i % 2 == 0:
-					simulator.setH(self.H0)
-					uv = simulator.simulate_lind_vec(protocol[i])
-				else:
-					simulator.setH(self.H1)
-					uv = simulator.simulate_lind_vec(protocol[i])
-			u = uv.reshape(u.shape, order='F')
-			resultw = np.absolute(self.psi1.conj().T @ u @ self.psi1)[0,0]
-			l_fid.append(resultw)
-		result = np.min(l_fid)
-		
-		if self.fid_fix =='barrier':
-			result -= 100000000.0 * int(np.any([t<0 for t in protocol]))#Note this enumeration method for np.matrix
-		return result
-
 	def ptrace(self, M, nb, out='b'):
 		'''partial trace
 		https://www.peijun.me/reduced-density-matrix-and-partial-trace.html'''

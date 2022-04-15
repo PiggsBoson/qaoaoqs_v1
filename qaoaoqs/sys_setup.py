@@ -1,4 +1,4 @@
-from quantum_manager import *
+from qaoaoqs.quantum_manager import *
 from quspin.basis import spin_basis_1d
 from quspin.operators import hamiltonian
 
@@ -249,22 +249,6 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 
-	#Lindblad dynamics for state transfer.
-	elif args.testcase == 'lind' or args.testcase == 'ns_lind':
-		dyna_type = 'lind'
-		fid_type = 'st'
-
-		psi0 = np.array([-1. / 2 - np.sqrt(5.) / 2, 1])
-		psi0 = psi0 / la.norm(psi0)
-		psi0_input = psi0.astype(complex)
-
-		psi1 = np.array([1. / 2 + np.sqrt(5.) / 2, 1])
-		psi1 = psi1 / la.norm(psi1)
-		psi1_input = psi1.astype(complex)
-		
-		H0 = (-sigma_z + 4.0 * sigma_x) / 2.
-		H1 = (-sigma_z - 4.0 * sigma_x) / 2.
-
 	elif args.testcase == 'dipole':
 		dyna_type = 'cs'
 		fid_type = 'au'
@@ -391,10 +375,6 @@ def setup(args, if_no_bath = False, couplings = None):
 			A = np.random.uniform(0.5, 5, n)
 			A /= 1000 #Scale to desired strength
 
-		sys_init = np.array([[1.0,0.0], [0.0,0.0]])
-		bath_init = np.zeros((2**n, 2**n), dtype='complex128')
-		bath_init[0,0] = 1
-		rho0  = np.kron(sys_init,bath_init)
 		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 		# compute Hilbert space basis
@@ -415,21 +395,24 @@ def setup(args, if_no_bath = False, couplings = None):
 		H0 = H_d.toarray() + 2.0 * H_c.toarray()
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 
-		decoherence_type = args.deco_type #TODO
-		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n #TODO
+		decoherence_type = args.deco_type
+		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n 
 		L = []
 		for i in range(n+n_system):
 			L_term = [[decoherence_type, [[gamma[i], i]] ]]
 			H_temp = hamiltonian(L_term, [], basis=basis, dtype=np.complex128, check_herm=False)
 			L.append(np.array(H_temp.toarray()))
+		if args.impl =='qutip':
+			H0 = qt.Qobj(H0)
+			H1 = qt.Qobj(H1)
+			L = [qt.Qobj(Li) for Li in L]
 
 		dyna_type = 'lind_new'
 		fid_type = 'GRK'
 		
 		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
-		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, 
-						couplings = A, lind_L = L, impl = args.impl, n = args.env_dim, 
-						protocol_renormal = args.protocol_renormal, fid_fix = args.fid_fix, T_tot = args.T_tot)
+		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args,
+						couplings = A, lind_L = L)
 
 	elif args.testcase == 'Xmon_nb':
 		dyna_type = 'cs'

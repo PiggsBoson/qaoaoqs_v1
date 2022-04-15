@@ -68,7 +68,7 @@ def parse_args():
 											   'brs', 'ars', 'scp'], default='pg', help='different approachs to the problem')
 	qc_arg.add_argument('--qaoa_method', choices=['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'Newton-CG', 'L-BFGS-B', 'TNC', 'COBYLA', 'SLSQP', 'trust-constr',
 												  'dogleg', 'trust-ncg', 'trust-exact', 'trust-krylov'], default='trust-constr', help='optimization method for the scipy optimize')
-	#System parameters
+	#Physical parameters
 	qc_arg.add_argument('--testcase', choices=['lind', 'cs_au', 'ns_cs', 'ns_lind', 
 						'dipole', 'XmonTLS', 'Xmon_nb','NoBath','dipole_VarStr', 
 						'2qbiSWAP', '2qbCPHASE', 'XXnYY', 'XXpm', 'XXYY_X', 
@@ -91,10 +91,25 @@ def parse_args():
 						default='rand', help='The target unitary')
 	qc_arg.add_argument('--target_angle',
 						default=1/8, help='The target angle of rotation as the multiple of pi')
-	qc_arg.add_argument('--lind_gamma', type=float, default= 1e-5,
-						help='The dephasing rate')
-	qc_arg.add_argument('--lind_L', choices=['sx', 'sy', 'sz'],
-						default='sz', help='The Lindblad operator')
+	qc_arg.add_argument('--measure', choices=['quantum', 'noise', 'noise_gate', 'plain', 'noise_avg',
+											  'noise_gate_avg'], default='plain', help='different settings for fidelity measurement')
+	qc_arg.add_argument('--uneq', choices=['normal', 'uniform'],
+						default = 'normal', help='coupling constants if unequal coupling')
+	qc_arg.add_argument('--cp_str', type=float,
+						default = 1.0, help='coupling strength')
+	#Parameters for dynamics
+	qc_arg.add_argument('--impl', choices=['qutip', 'numpy', 'quspin', 'vec'],
+					default = 'numpy', help='different implementations of the dynamics')
+	qc_arg.add_argument('--ode_steps', type=int,
+						default=10, help='Numbers of steps for each time interval for the ode solver')	
+	#Lindblad parameters
+	qc_arg.add_argument('--deco_type', default='-', help='The Lindblad operator')
+	qc_arg.add_argument('--T1_TLS', type=float, default= 1.0,
+						help='The T1 time of all the TLS')
+	qc_arg.add_argument('--T1_sys', type=float, default= 1.0,
+						help='The T1 time of the system qubits')
+	
+	#Protocol-related parameters
 	qc_arg.add_argument('--fid_adj', choices=['t', 'others'],
 					   default=None, help='adjustments to fidelity for certain purposes')
 	qc_arg.add_argument('--T_tot', type=float,
@@ -104,34 +119,7 @@ def parse_args():
 	qc_arg.add_argument('--protocol_renormal', type=bool,
 						default=False, help='Whether renormalizing the protocol in computing the fidelity')
 
-	qc_arg.add_argument('--measure', choices=['quantum', 'noise', 'noise_gate', 'plain', 'noise_avg',
-											  'noise_gate_avg'], default='plain', help='different settings for fidelity measurement')
-	qc_arg.add_argument('--noise_level', type=float,
-						default=1e-2, help='the noise standard deviation for the gaussian noise')
-	qc_arg.add_argument('--noise_delta', type=float,
-						default=1e-2, help='the noise standard deviation for hamiltonian noise')
-	qc_arg.add_argument('--ns', type=int, default=15,
-						help='number of samples for the hamiltonian noise in the max-min problem')
 	
-	qc_arg.add_argument('--impl', choices=['qutip', 'numpy', 'quspin', 'vec'],
-						default = 'numpy', help='different implementations of the dynamics')
-	qc_arg.add_argument('--uneq', choices=['normal', 'uniform'],
-						default = 'normal', help='coupling constants if unequal coupling') #TODO: implement this
-	qc_arg.add_argument('--cp_str', type=float,
-						default = 1.0, help='coupling strength')
-
-	# population based method
-	pb_arg = add_argument_group('PopulationBased')
-	pb_arg.add_argument('--npop', type=int, default=256,
-						help='The number of the population')
-	pb_arg.add_argument('--bpop', type=int, default=100,
-						help='The number of elite in the population')
-	pb_arg.add_argument('--sigma', type=float, default=0.1,
-						help='noise standard deviation')
-	pb_arg.add_argument('--alpha_es', type=float,
-						default=0.001, help='learning rate')
-	pb_arg.add_argument('--alpha_rs', type=float,
-						default=0.05, help='learning rate')
 
 	# network
 	net_arg = add_argument_group('Network')
@@ -240,28 +228,6 @@ def train(seed, exp_dir):
 		print('Fidelity: ', quma.get_reward(sol.x))
 		print('==='*10)
 
-	elif args.approach == 'es':
-		protocol = np.random.normal(loc=0.5, scale=0.1, size=args.p)
-		t = trange(args.num_iters, desc='Reward')
-
-		for iter_i in t:
-			N = np.random.randn(args.npop, args.p)
-			WN = args.sigma * N + protocol
-
-			reward = pool.map(quma.get_reward, WN)
-			reward = np.array(reward)
-
-			reward = (reward - np.mean(reward)) / np.std(reward)
-
-			protocol = protocol + args.alpha_es / \
-				(args.npop*args.sigma) * np.dot(N.T, reward)
-
-			score = quma.get_reward(protocol)
-			print('protocol: {}, reward: {}'.format(protocol, score))
-			logger.info("iter: {}, loss: {}, mean_reward: {}, max_reward: {},  test_reward: {}, his_reward: {}, entropy: {}".
-						format(iter_i, -score, score, score, score, score, 0.0))
-
-			t.set_description('Reward: %g' % score)
 
 	elif args.approach == 'brs':
 		protocol = np.random.normal(loc=0.5, scale=0.1, size=args.p)

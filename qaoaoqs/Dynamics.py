@@ -44,10 +44,6 @@ class Dyna():
 			self.G = 0
 			for Li in L:
 				self.G += np.kron(Li.conj(), Li) - 0.5* np.kron(self.Id, (Li.conj().T @ Li)) - 0.5 * np.kron((Li.T @ Li.conj()), self.Id)
-		elif self.impl == 'qutip':
-			self.state = qt.Qobj(init_state)
-			self.H = qt.Qobj(H)
-			self.L = [qt.Qobj(Li) for Li in L]
 		else:
 			self.state = init_state
 			self.H = H
@@ -56,11 +52,11 @@ class Dyna():
 	def setH(self, H):
 		if self.lind_vec:
 			self.H_sup = - self.imag_unit *(np.kron(H, self.Id) -np.kron(self.Id, H))
-		elif self.impl == 'qutip':
-			self.H = qt.Qobj(H)
 		else:
 			self.H = H
 
+	def set_state(self, state):
+		self.state = state
 
 	def simulate_closed (self, t):
 		"""simulate the dynamics of closed system

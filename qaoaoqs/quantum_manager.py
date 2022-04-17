@@ -99,8 +99,21 @@ class QuManager():
 
 		
 		if self.dyna_type == 'lind_new':
+			n_s = kwargs.get('n_s')
+			self.N_s = 2**n_s
 			self.simulator = Dyna(psi0, H0, N=2**(self.n+1), L = kwargs.get('lind_L',None), impl = self.impl, t_steps = args.ode_steps)
-	
+			self.N_b = 2**(self.n+self.n2)
+			self.rho_test = []
+			for i in range(self.N_s):
+				rhoi = np.zeros((self.N_s, self.N_s))
+				rhoi[i,i] = 1
+				self.rho_test.append(rhoi)
+			self.rho_test.append(np.ones((self.N_s, self.N_s))/self.N_s)
+			self.rho_target = [self.psi1 @ rhoi @ self.psi1.conj().T for rhoi in self.rho_test]
+			if args.impl =='qutip':
+				self.rho_test = [qt.Qobj(rhoi) for rhoi in self.rho_test]
+				self.rho_target = [qt.Qobj(rhoti) for rhoti in self.rho_target]
+
 	def get_reward(self, protocol):
 		"""Get the fidelity of the protocol
 
@@ -155,14 +168,30 @@ class QuManager():
 					result = result - 100000000.0 * int(np.any([t<0 for t in protocol]))
 
 		elif self.dyna_type == 'lind_new':
-			for i in range(len(protocol)):
-				if i % 2 == 0:
-					self.simulator.setH(self.H0)
-					self.simulator.simulate_lind_qutip(protocol[i])
+			result = 0
+			for i in range(len(self.rho_test)):
+				self.simulator.set_state(self.rho_test[i])
+				if self.impl == 'vec':
+					for i in range(len(protocol)):
+						if i % 2 == 0:
+							self.simulator.setH(self.H0)
+							self.simulator.simulate_lind_vec(protocol[i])
+						else:
+							self.simulator.setH(self.H1)
+							self.simulator.simulate_lind_vec(protocol[i])
+				elif self.impl == 'qutip':
+					for i in range(len(protocol)):
+						if i % 2 == 0:
+							self.simulator.setH(self.H0)
+							self.simulator.simulate_lind_qutip(protocol[i])
+						else:
+							self.simulator.setH(self.H1)
+							self.simulator.simulate_lind_qutip(protocol[i])
 				else:
-					self.simulator.setH(self.H1)
-					self.simulator.simulate_lind_qutip(protocol[i])
-							
+					raise Exception("Dynamics type not supported")
+				result += self.simulator.measure(self.rho_target[i]).real /np.trace(self.rho_test[i]@self.rho_test[i])
+			result /= len(self.rho_test)
+
 		if self.fix_adj =='t':
 			# if np.sum(protocol) >= 1:
 			result -= np.log(np.sum(protocol))

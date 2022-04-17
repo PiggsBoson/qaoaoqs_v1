@@ -409,10 +409,18 @@ def setup(args, if_no_bath = False, couplings = None):
 
 		dyna_type = 'lind_new'
 		fid_type = 'GRK'
+
+		psi1 =  target_uni(args.au_uni)
+		psi1_input = psi1.astype(complex)
+		if len(psi1_input) < 2**n_system:
+			'''Append identity if dimension doesn't match'''
+			Id = np.identity(2**n_system // len(psi1_input))
+			psi1_input = np.kron(psi1_input, Id)
+		psi0_input = None #Not used
 		
 		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args,
-						couplings = A, lind_L = L)
+						couplings = A, lind_L = L, n_s = n_system)
 
 	elif args.testcase == 'Xmon_nb':
 		dyna_type = 'cs'

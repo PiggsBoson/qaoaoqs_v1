@@ -129,7 +129,6 @@ def setup(args, if_no_bath = False, couplings = None):
 			psi1_input = psi_f.astype(complex)
 		n_system = 1
 
-	
 	#Central spin with arbitrary unitary fidelity
 	elif args.testcase == 'cs_au':
 		dyna_type = 'cs'
@@ -367,22 +366,22 @@ def setup(args, if_no_bath = False, couplings = None):
 		'''Exploiting Non-Markovianity for Quantum Control'''
 		n_system = 1
 		n = args.env_dim #number of bath qubits
-		N = 2**(n+n_system)
 		if args.cs_coup == 'eq':
 			A = np.ones(n)
-			A /= 200
 		elif args.cs_coup == 'uneq':
-			A = np.random.uniform(0.5, 5, n)
-			A /= 1000 #Scale to desired strength
+			A = np.random.uniform(0.1, 1, n)
+		A *= 0.04 #40MHz
 
 		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
+		Delta *= 8.0 #8GHz
+
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n+1)
 		# compute site-coupling lists
 		z_term = [[-Delta[i]/2, i] for i in range(n+1)]
 		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
-		x_term = [[1.0, 0]]
+		x_term = [[8.0, 0]]
 		#operator string lists
 		static_d = [['z', z_term], 
 					['-+', couple_term], ['+-', couple_term]]
@@ -410,17 +409,63 @@ def setup(args, if_no_bath = False, couplings = None):
 		dyna_type = 'lind_new'
 		fid_type = 'GRK'
 
-		psi1 =  target_uni(args.au_uni)
-		psi1_input = psi1.astype(complex)
-		if len(psi1_input) < 2**n_system:
-			'''Append identity if dimension doesn't match'''
-			Id = np.identity(2**n_system // len(psi1_input))
-			psi1_input = np.kron(psi1_input, Id)
-		psi0_input = None #Not used
+	elif args.testcase =='TLSsec_bath_2qb':
+		'''Exploiting Non-Markovianity for Quantum Control'''
+		n1 = args.env_dim #number of bath qubits coupled to qubit 1
+		n2 = args.env_dim2 #number of bath qubits coupled to qubit 2
+		n=n1+n2
+		n_system = 2
+		if args.cs_coup == 'eq':
+			A = np.ones(n)
+		elif args.cs_coup == 'uneq':
+			A = np.random.uniform(0.1, 1, n)
+		A *= 0.04 #40MHz
 		
-		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
-		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args,
-						couplings = A, lind_L = L, n_s = n_system)
+		g = 8.0 #qubit-qubit coupling constant
+
+		# compute Hilbert space basis
+		basis = spin_basis_1d(L = n+n_system)
+		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
+		Delta = np.insert(Delta, 0, [1.0, 1.05]) #Insert the qubit frequency
+		Delta *= 8.0 #8GHz
+
+		# compute site-coupling lists
+		couple_term_1 = [[A[i]/2, 0, i+2] for i in range(n1)]
+		couple_term_2 = [[A[i+n1]/2, 1, i+2+n1] for i in range(n2)]
+		x_term = [[8.0, i] for i in range(2)]
+		entangle_term = [[- g/2, 0, 1]]
+		z_term = [[-Delta[i]/2, i] for i in range(n+n_system)]
+
+		#operator string lists
+		static_d = [['-+', couple_term_1], ['+-', couple_term_1], 
+					['-+', couple_term_2], ['+-', couple_term_2]]
+		control = [['x', x_term]]
+		static_sys = [['zz', entangle_term], ['z', z_term]]
+
+		#The drifting Hamiltonian
+		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
+		#The control Hamiltonians
+		H_c = hamiltonian(control, [], basis=basis, dtype=np.complex128)
+		H_s = hamiltonian(static_sys, [], basis=basis, dtype=np.complex128)
+
+		#QAOA Hamiltonians
+		H0 = H_d.toarray() + H_s.toarray() + H_c.toarray()
+		H1 = H_d.toarray() + H_s.toarray() - H_c.toarray()
+
+		decoherence_type = args.deco_type
+		gamma = [np.sqrt(1/args.T1_sys)]*n_system + [np.sqrt(1/args.T1_TLS)]*n 
+		L = []
+		for i in range(n+n_system):
+			L_term = [[decoherence_type, [[gamma[i], i]] ]]
+			H_temp = hamiltonian(L_term, [], basis=basis, dtype=np.complex128, check_herm=False)
+			L.append(np.array(H_temp.toarray()))
+		if args.impl =='qutip':
+			H0 = qt.Qobj(H0)
+			H1 = qt.Qobj(H1)
+			L = [qt.Qobj(Li) for Li in L]
+
+		dyna_type = 'lind_new'
+		fid_type = 'GRK'
 
 	elif args.testcase == 'Xmon_nb':
 		dyna_type = 'cs'
@@ -647,8 +692,6 @@ def setup(args, if_no_bath = False, couplings = None):
 		
 		# E = np.linspace(1.0,1.0+0.1*(n-1), num=2) #TODO:qubit frequency
 		g = 1.0 #qubit-qubit coupling constant
-
-		 
 
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n1+n2+n_system)
@@ -938,16 +981,19 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() + H_cb.toarray()
 		n=n1+n2
 
-	#Set up target unitary
-	if args.testcase != ('lind' or 'ns_lind' or 'TLSsec_bath'):
-		psi1 =  target_uni(args.au_uni)
-		psi1_input = psi1.astype(complex)
-		if len(psi1_input) < 2**n_system:
-			'''Append identity if dimension doesn't match'''
-			Id = np.identity(2**n_system // len(psi1_input))
-			psi1_input = np.kron(psi1_input, Id)
+	psi1 =  target_uni(args.au_uni)
+	psi1_input = psi1.astype(complex)
+	if len(psi1_input) < 2**n_system:
+		'''Append identity if dimension doesn't match'''
+		Id = np.identity(2**n_system // len(psi1_input))
+		psi1_input = np.kron(psi1_input, Id)
+	A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
+	if args.testcase == ('TLSsec_bath' or 'TLSsec_bath_2qb'):
+		psi0_input = None #Not used
+		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args,
+						couplings = A, lind_L = L, n_s = n_system)
+	else:
 		psi0_input = np.identity(2**(n+n_system)) #Start from identity
-		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args, couplings = A)
 	
 	return quma

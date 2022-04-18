@@ -97,6 +97,8 @@ def parse_args():
 						default = 'normal', help='coupling constants if unequal coupling')
 	qc_arg.add_argument('--cp_str', type=float,
 						default = 1.0, help='coupling strength')
+	qc_arg.add_argument('--b_temp', choices=['zero', 'inf'],
+						default = 'zero', help='Bath temperature')					
 	#Parameters for dynamics
 	qc_arg.add_argument('--impl', choices=['qutip', 'numpy', 'quspin', 'vec'],
 					default = 'numpy', help='different implementations of the dynamics')

@@ -18,7 +18,7 @@ from scipy.special import comb
 
 class Dyna():
 
-	def __init__(self, init_state, H, N = 2, L =None, impl = 'numpy', lind_vec =False, t_steps = 100):
+	def __init__(self, init_state, H, N = 2, L =None, impl = 'numpy', t_steps = 100):
 		"""system parameters
 
 		Arguments:
@@ -34,9 +34,8 @@ class Dyna():
 		self.N = N
 		self.impl = impl
 		self.imag_unit = np.complex64(1.0j)
-		self.lind_vec = lind_vec
 		self.t_steps = t_steps
-		if lind_vec:
+		if impl =='vec':
 			self.ori_shape = init_state.shape
 			self.state = init_state.reshape((-1, 1), order='F')#vectorize
 			self.Id = np.identity(self.N) #identity
@@ -50,14 +49,16 @@ class Dyna():
 			self.L = L
 		
 	def setH(self, H):
-		if self.lind_vec:
+		if self.impl == 'vec':
 			self.H_sup = - self.imag_unit *(np.kron(H, self.Id) -np.kron(self.Id, H))
 		else:
 			self.H = H
 
 	def set_state(self, state):
-		self.state = state
-
+		if self.impl == 'vec':
+			self.state = state.reshape((-1, 1), order='F')#vectorize
+		else:
+			self.state = state
 	def simulate_closed (self, t):
 		"""simulate the dynamics of closed system
 			implemented with scipy
@@ -115,7 +116,7 @@ class Dyna():
 
 	def measure(self, O):
 		'''Measure the current state with observable O'''
-		if self.lind_vec:
+		if self.impl == 'vec':
 			return np.trace(O @ self.state.reshape((self.ori_shape), order='F'))
 		elif self.impl == 'qutip':
 			return qt.expect(qt.Qobj(O), self.state)
@@ -123,7 +124,7 @@ class Dyna():
 			return np.trace(O @ self.state)
 	
 	def getRho(self):
-		if self.lind_vec:
+		if self.impl == 'vec':
 			return self.state.reshape(self.ori_shape, order='F')
 		elif self.impl == 'qutip':
 			return self.state.full()

@@ -102,17 +102,27 @@ class QuManager():
 			n_s = kwargs.get('n_s')
 			self.N_s = 2**n_s
 			self.simulator = Dyna(psi0, H0, N=2**(self.n+1), L = kwargs.get('lind_L',None), impl = self.impl, t_steps = args.ode_steps)
-			self.N_b = 2**(self.n+self.n2)
+			n_b = self.n+self.n2
+			self.N_b = 2**n_b
+
+			if args.b_temp == 'zero':
+				bath_init = np.zeros((2**n_b, 2**n_b), dtype='complex128')
+				bath_init[0,0] = 1
+			elif args.b_temp == 'inf':
+				bath_init = np.identity(2**n_b, dtype='complex128') #unpolarized state of bath
+				bath_init /= 2**n_b #Normalize
+
 			self.rho_test = []
 			for i in range(self.N_s):
 				rhoi = np.zeros((self.N_s, self.N_s))
 				rhoi[i,i] = 1
 				self.rho_test.append(rhoi)
 			self.rho_test.append(np.ones((self.N_s, self.N_s))/self.N_s)
+			self.rho_test_purity = [np.trace(rhoi@rhoi) for rhoi in self.rho_test]
 			self.rho_target = [self.psi1 @ rhoi @ self.psi1.conj().T for rhoi in self.rho_test]
+			self.rho_test = [np.kron(rhoi, bath_init) for rhoi in self.rho_test]
 			if args.impl =='qutip':
 				self.rho_test = [qt.Qobj(rhoi) for rhoi in self.rho_test]
-				self.rho_target = [qt.Qobj(rhoti) for rhoti in self.rho_target]
 
 	def get_reward(self, protocol):
 		"""Get the fidelity of the protocol
@@ -169,8 +179,8 @@ class QuManager():
 
 		elif self.dyna_type == 'lind_new':
 			result = 0
-			for i in range(len(self.rho_test)):
-				self.simulator.set_state(self.rho_test[i])
+			for j in range(len(self.rho_test)):
+				self.simulator.set_state(self.rho_test[j])
 				if self.impl == 'vec':
 					for i in range(len(protocol)):
 						if i % 2 == 0:
@@ -189,7 +199,10 @@ class QuManager():
 							self.simulator.simulate_lind_qutip(protocol[i])
 				else:
 					raise Exception("Dynamics type not supported")
-				result += self.simulator.measure(self.rho_target[i]).real /np.trace(self.rho_test[i]@self.rho_test[i])
+				rhot = self.simulator.getRho()
+				Nb = 2**(self.n+self.n2)
+				rho_ts = self.ptrace(rhot, Nb, out = 'b')
+				result += np.trace(rho_ts @ self.rho_target[j]).real /self.rho_test_purity[j]
 			result /= len(self.rho_test)
 
 		if self.fix_adj =='t':

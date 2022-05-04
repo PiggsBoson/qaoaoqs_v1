@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import json
 import os
 import re
-import pickle
 import numpy as np
 
 
@@ -64,14 +63,16 @@ def plot_data(data, value="mean_reward"):
     if value == "log_Fid":    
         logfid = [-np.log10(1 - f) for f in data["max_reward"]]# Plot log fidelity
         data['log_Fid'] = logfid
+    
+    plt.rcParams.update({'font.size': 14})
 
-    sns.set(style="darkgrid", font_scale=1.5)
+    # sns.set(style="darkgrid", font_scale=1.5)
     # print(data)
     fig, ax = plt.subplots()
-    sns.lineplot(data=data, x="iter", y=value, hue="Condition")
+    sns.lineplot(data=data, x="iter", y=value, hue="Condition", palette = sns.color_palette("husl", 4))
 
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles=handles[1:], labels=labels[1:]) #Get rid of the titles in the legend
+    ax.legend(handles=handles, labels=labels)
     # plt.legend( loc='best').set_draggable(True)
     # eps = 1e-2
     # plt.ylim(0.0-eps,1.0+eps)

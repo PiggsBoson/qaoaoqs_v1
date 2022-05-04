@@ -246,13 +246,15 @@ class QuManager():
 		result = 0
 		u = np.copy(self.psi0)
 		simulator = Dyna(u , self.H0)
-		u = simulator.simulate_closed(T)
+		simulator.simulate_closed(T)
+		u = simulator.getRho()
 		#The fidelity follows that defined by Arenz et al.
 		N = 2**self.n #size of bath space
-		u_f = np.matrix(np.kron(self.psi1, np.identity(N)))
-		Q = u_f.getH() @ u 
+		u_f = np.kron(self.psi1, np.identity(N))
+		# print(self.psi1.shape, u.shape)
+		Q = u_f.conjugate().transpose() @ u 
 		Q = Q[ :N, :N] + Q[N: , N: ] #partial trace
-		result = np.absolute(np.trace(la.sqrtm(Q.getH() @ Q)) / (2*N)) ** 2
+		result = np.absolute(np.trace(la.sqrtm(Q.conjugate().transpose() @ Q)) / (2*N)) ** 2
 		return result
 	
 	def reset(self, **kwargs):

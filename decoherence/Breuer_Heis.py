@@ -60,18 +60,26 @@ def rho_t(t, N, omega0, A, rho0):
 def main():
     A = 1
     N_array = [1,2,3,4,5,6,10,20,50,100]#range(1,7)#
-    t_array = np.linspace(0,1/A,100)
+    colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a']
+    t_array = np.linspace(0,0.1/A,100)
     plot_opt = pop_0
     omega0 = 1
     sys_init = np.array([1.,0.])#np.random.uniform(size =2)
     sys_init /= np.linalg.norm(sys_init)
     rho0 = np.outer(sys_init,sys_init.conj().T)
+    plt.rcParams.update({'font.size': 14})
+
+    fig, ax1 = plt.subplots()
+    l, b, h, w = .45, .2, .3, .4
+    ax2 = fig.add_axes([l, b, w, h])
+    i= 0
     for N in N_array:
         # A = A/np.sqrt(N)
         y_array = []
         for t in t_array:
             y_array.append(np.trace(rho_t(t, N, omega0, A, rho0)@plot_opt))
-        plt.plot(t_array, y_array,label = 'n='+str(N))
+        ax1.plot(t_array, y_array,color = colors[i],label = 'n='+str(N))
+        ax2.plot(t_array[:30], y_array[:30],color = colors[i],label = 'n='+str(N))
         # plt.plot(t_array, y_array,'-o',label = 'n='+str(N))
 
         #comparing with numerical simulation to check correctness
@@ -83,11 +91,17 @@ def main():
         # for t in t_array:
         #     result_num.append(evolveNmeasure(rho0_sb, H, t, plot_opt))
         # plt.plot(t_array, result_num, '-x')
-    
-    plt.xlabel('t')
+        i+=1
+    ax1.set_ylim(0,1)
+    ax1.set_xlabel(r't')
     # plt.ylabel('Re(rho_01)')
-    plt.ylabel('rho_00')
-    plt.legend() 
+    ax1.set_ylabel(r'$\rho_{00}$')
+    ax1.legend() 
+
+    ax2.set_xticks([0.00, 0.01,0.02, 0.03])
+    # ax2.set_ylim(0.8,1)
+    ax2.set_yticks([0.8, 0.9,1.0])
+    ax2.tick_params(labelsize= 8)
     plt.show()
 
 main()

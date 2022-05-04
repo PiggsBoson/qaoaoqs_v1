@@ -21,10 +21,18 @@ This is used to plot the maximum fidelity in each set of simulations against p,n
 '''
 
 def plot_data(data, args):
-	sns.set(style="darkgrid", font_scale=1.0)
+	'''Color schemes: https://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=6'''
+	colors = ['#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02']
+	#Scheme 1: ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33']
+	ftsz = 16 #Font size
+	plt.rcParams.update({'font.size': ftsz})
+	plt.rcParams['text.usetex'] = True
+
+	# sns.set(style="darkgrid", font_scale=1.0)
 	data.sort_values(by = [args.x], inplace=True)
 
 	data.rename(columns={"env_dim": "n"}, inplace = True) #For better readability
+	data[['n']] = data[['n']].astype(int)
 
 	groupped = data.fillna(-1).groupby(args.group_by) #fillna() fills -1 to missing parameter entries due to version differences.
 	i=0
@@ -35,26 +43,37 @@ def plot_data(data, args):
 		if args.group_by_2nd != None:
 			groupped_2nd = group.groupby(args.group_by_2nd)
 			for name_2nd, group_2nd in groupped_2nd:
+				line_color = colors[i]
 				#Now only consiter group_by is approach
-				line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group_2nd, label = str(name).upper() + ' , ' + args.group_by_2nd + ' = ' +str(name_2nd))
+				if args.group_by == 'approach':
+					line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group_2nd, color = line_color, alpha = 1.0, label = str(name).upper() + ' , ' + args.group_by_2nd + ' = ' +str(name_2nd))
+				else: 
+					line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group_2nd, color = line_color, alpha = 1.0, label = args.group_by + ' = ' +str(int(name)) + ' , ' + args.group_by_2nd + ' = ' +str(name_2nd))
 				print(max(line.get_data()[1])) #Print highest fidelity
+				if args.option == 'state_fid':
+					plt.errorbar(args.x, 'state_fid_log' , yerr = 'state_fid_log_sd',ls = '-', marker = 'o', data = group_2nd, color = line_color, alpha = 0.5, capsize = 5, label='_nolegend_')
+				i+=1
 		else:
-			line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group, label = args.group_by + ' = ' +str(name))
+			line_color = colors[i]
+			line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group, color = line_color, alpha = 1.0, label = args.group_by + ' = ' +str(name))
+			print(name)
 			print(max(line.get_data()[1])) #Print highest fidelity
 			if args.option == 'comparison':
+				i+=1
 				line.set_label('QAOA control')
 				# if args.value =='log_fid':
-				plt.plot(args.x, 'log_fid_no',ls = '-', marker = 'o', data = group, label = 'No Control') #only log fidelity is used
+				plt.plot(args.x, 'log_fid_no',ls = '-', marker = 'o', data = group, color = colors[i], label = 'No Control') #only log fidelity is used
 				# else:
 					# plt.plot(args.x, 'no_opt',ls = '-', marker = 'o', data = group, label = 'No Control')
 			elif args.option == 'state_fid':
-				line.set_label('Unitary')
-				plt.errorbar(args.x, 'state_fid_log' , yerr = 'state_fid_log_sd',ls = '-', marker = 'o', data = group, label = 'State', capsize = 5)
+				# line.set_label('Unitary')
+				plt.errorbar(args.x, 'state_fid_log' , yerr = 'state_fid_log_sd',ls = '-', marker = 'o', data = group, color = line_color, alpha = 0.5, capsize = 5, label='_nolegend_')
 			elif args.option == 'GRK':
 				line.set_label('Unitary')
 				plt.plot(args.x, 'GRK_fid_log',ls = '-', marker = 'o', data = group, label = 'GRK')
 			elif args.group_by == 'approach':
 				line.set_label(str(name).upper())
+			i+=1
 
 	#horizontal line for comparison. Not commonly used.
 	# plt.plot(np.linspace(0,60), np.ones(50)*5.035443, ls = '-')#dp n=2,p=30: 5.867927
@@ -65,29 +84,37 @@ def plot_data(data, args):
 	# plt.plot(30.285161, 6.059272, marker = 'x', label = "Primitive PG")	#Heisenberg n=2,p=30: 6.059272
 
 	if args.x == "T_tot":
-		plt.xlabel(r'$ T$')
+		plt.xlabel(r'$ T$', fontsize=ftsz)
 	elif args.x == "TLS_T":
-		plt.xlabel(r'$T$ (ns)')
+		plt.xlabel(r'$T$ (ns)', fontsize=ftsz)
 	else:
-		plt.xlabel(args.x)
+		plt.xlabel(args.x, fontsize=ftsz)
 
 	if args.value == "log_fid":
-		plt.ylabel(r'$ -\log_{10}(1-F(\theta_p))$')
-		plt.ylim(0,11)
+		plt.ylabel(r'$ -\log_{10}(1-F(\theta_p))$', fontsize=ftsz)
+		plt.ylim(0, args.ylim)
 	elif args.value == "fid":
-		plt.ylabel(r'$ F(\theta_p)$')
+		plt.ylabel(r'$ F(\theta_p)$', fontsize=ftsz)
 	elif args.value == "T_tot":
-		plt.ylabel(r'$ T$')
+		plt.ylabel(r'$ T$', fontsize=ftsz)
 	else:
-		plt.ylabel(args.value)
+		plt.ylabel(args.value, fontsize=ftsz)
 
 	if args.title != None:
 		plt.title(args.title)
-	ftsz = 16 #Font size
 	if args.legend:
 		plt.legend(args.legend, fontsize = ftsz)
 	else:
 		plt.legend(fontsize = ftsz)
+	'''Hardcoding some of the legends...'''
+	# plt.legend([r'$T_1^{sys} = 500$ ns', 
+	# r'$T_1^{sys} = 1$ $\mu$s',
+	# r'$T_1^{sys} = 5$ $\mu$s'])
+	# plt.legend([r'$T_1^{sys} = 500$ ns, $T_1^{TLS} = 200$ ns', 
+	# r'$T_1^{sys} = 1$ $\mu$s, $T_1^{TLS} = 500$ ns',
+	# r'$T_1^{sys} = 5$ $\mu$s, $T_1^{TLS} = 1$ $\mu$s'])
+
+
 	plt.xticks(fontsize=ftsz)	
 	plt.yticks(fontsize=ftsz)	
 	plt.tight_layout()
@@ -288,6 +315,7 @@ def main():
 	parser.add_argument('--temp',choices=['zero', 'inf', 'rand'],default='zero')
 	parser.add_argument('--state_samples', type = int, default=100)
 	parser.add_argument('--sanity_check',type=bool, default=False)
+	parser.add_argument('--ylim',type = int, default=11)
 
 	args = parser.parse_args()
 

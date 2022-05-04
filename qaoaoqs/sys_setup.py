@@ -41,6 +41,7 @@ def target_uni(uni_name):
 
 def setup(args, if_no_bath = False, couplings = None):
 	'''Return the quantum manager corresponding the test case'''
+	print(args.testcase)
 	# test 2: Marin Bukov's paper
 	if if_no_bath or (args.testcase == 'NoBath'):
 		dyna_type = 'cs'
@@ -140,39 +141,27 @@ def setup(args, if_no_bath = False, couplings = None):
 			A = np.random.uniform(1.0, 2.0, n) #According to Arenz
 			# A = np.random.normal(1.0, 0.25, n)
 		
-		if args.impl == 'numpy':
-			# import Wastes.CentralSpin as CentralSpin
-			# H_d = CentralSpin.Hamiltonian(-0.5*sigma_z, A)
-			# H_c = np.kron(sigma_x, np.identity(2**n))
-			# #QAOA Hamiltonians
-			# H0 = H_d + 2.0 * H_c
-			# H1 = H_d - 2.0 * H_c
-			pass
+		# compute Hilbert space basis
+		basis = spin_basis_1d(L = n+1)
+		
+		# compute site-coupling lists
+		z_term = [[-0.5, 0]]
+		couple_term = [[A[i], 0, i+1] for i in range(n)]
+		x_term = [[1.0, 0]]
 
-		elif args.impl == 'quspin':
-			
+		#operator string lists
+		static_d = [['z', z_term], ['zz', couple_term], 
+					['xx', couple_term], ['yy', couple_term]]
+		static_c = [['x', x_term]]
 
-			# compute Hilbert space basis
-			basis = spin_basis_1d(L = n+1)
-			
-			# compute site-coupling lists
-			z_term = [[-0.5, 0]]
-			couple_term = [[A[i], 0, i+1] for i in range(n)]
-			x_term = [[1.0, 0]]
+		#The drifting Hamiltonian
+		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
+		#The control Hamiltonian
+		H_c = hamiltonian(static_c, [], basis=basis, dtype=np.complex128)
 
-			#operator string lists
-			static_d = [['z', z_term], ['zz', couple_term], 
-						['xx', couple_term], ['yy', couple_term]]
-			static_c = [['x', x_term]]
-
-			#The drifting Hamiltonian
-			H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
-			#The control Hamiltonian
-			H_c = hamiltonian(static_c, [], basis=basis, dtype=np.complex128)
-
-			#QAOA Hamiltonians
-			H0 = H_d.toarray() + 2.0 * H_c.toarray()
-			H1 = H_d.toarray() - 2.0 * H_c.toarray()
+		#QAOA Hamiltonians
+		H0 = H_d.toarray() + 2.0 * H_c.toarray()
+		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 
 	elif args.testcase == 'Heis_bbzz':

@@ -39,11 +39,15 @@ def target_uni(uni_name):
 		x = x / la.norm(x) #Normalize
 		return x[0] * np.identity(2) + 1.0j * (x[1] * sigma_x + x[2] * sigma_y + x[3] * sigma_z) #The target unitary W on the system.
 
-def setup(args, if_no_bath = False, couplings = None):
+def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	'''Return the quantum manager corresponding the test case'''
-	print(args.testcase)
+	if alt_testcase:
+		test_case = alt_testcase
+	else: 
+		test_case = args.testcase
+	print(test_case)
 	# test 2: Marin Bukov's paper
-	if if_no_bath or (args.testcase == 'NoBath'):
+	if if_no_bath or (test_case == 'NoBath'):
 		dyna_type = 'cs'
 		fid_type = 'au'
 		n=0
@@ -53,7 +57,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = -0.5*sigma_z - 2.0*sigma_x
 		n_system = 1
 		
-	elif args.testcase == 'marin':
+	elif test_case == 'marin':
 		psi0 = np.array([-1. / 2 - np.sqrt(5.) / 2, 1])
 		psi0 = psi0 / la.norm(psi0)
 		psi0_input = psi0.astype(complex)
@@ -68,7 +72,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		n_system = 1
 
 	#Central spin with state transfer.
-	elif args.testcase == 'cs_st':
+	elif test_case == 'cs_st':
 		dyna_type = 'cs'
 		fid_type = 'st'
 		n = args.env_dim #number of bath qubits
@@ -131,7 +135,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		n_system = 1
 
 	#Central spin with arbitrary unitary fidelity
-	elif args.testcase == 'cs_au':
+	elif test_case == 'cs_au':
 		dyna_type = 'cs'
 		fid_type = 'au'
 		n = args.env_dim #number of bath qubits
@@ -164,7 +168,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 
-	elif args.testcase == 'Heis_bbzz':
+	elif test_case == 'Heis_bbzz':
 		'''
 		Isotropic coupling with bath-bath couplings
 		'''
@@ -204,7 +208,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 
-	elif args.testcase == 'ns_cs':
+	elif test_case == 'ns_cs':
 		dyna_type = 'cs'
 		fid_type = 'au'
 
@@ -237,7 +241,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 
-	elif args.testcase == 'dipole':
+	elif test_case == 'dipole':
 		dyna_type = 'cs'
 		fid_type = 'au'
 		n = args.env_dim #number of bath qubits
@@ -269,7 +273,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 			
-	elif args.testcase == 'XmonTLS':
+	elif test_case == 'XmonTLS':
 		dyna_type = 'cs'
 		fid_type = 'au'
 		n = args.env_dim #number of bath qubits
@@ -306,7 +310,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 
-	elif args.testcase == 'TLS_bb':
+	elif test_case == 'TLS_bb':
 		'''
 		TLS-TLS coupling zz
 		Towards understanding two-level-systems in amorphous solids - Insights from quantum circuits
@@ -351,7 +355,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 
-	elif args.testcase =='TLSsec_bath':
+	elif test_case =='TLSsec_bath':
 		'''Exploiting Non-Markovianity for Quantum Control'''
 		n_system = 1
 		n = args.env_dim #number of bath qubits
@@ -398,7 +402,56 @@ def setup(args, if_no_bath = False, couplings = None):
 		dyna_type = 'lind_new'
 		fid_type = 'GRK'
 
-	elif args.testcase =='TLSsec_bath_2qb':
+	elif test_case =='TLSsec_bath_lowStr':
+		'''Exploiting Non-Markovianity for Quantum Control
+		lowered strength, same as other test cases'''
+		n_system = 1
+		n = args.env_dim #number of bath qubits
+		if args.cs_coup == 'eq':
+			A = np.ones(n)
+			A /= 200
+		elif args.cs_coup == 'uneq':
+			A = np.random.uniform(0.5, 5, n)
+			A /= 1000 #Scale to desired strength
+
+		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
+		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
+
+		# compute Hilbert space basis
+		basis = spin_basis_1d(L = n+1)
+		# compute site-coupling lists
+		z_term = [[-Delta[i]/2, i] for i in range(n+1)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
+		x_term = [[1.0, 0]]
+		#operator string lists
+		static_d = [['z', z_term], 
+					['-+', couple_term], ['+-', couple_term]]
+		static_c = [['x', x_term]]
+		#The drifting Hamiltonian
+		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
+		#The control Hamiltonian
+		H_c = hamiltonian(static_c, [], basis=basis, dtype=np.complex128)
+		#QAOA Hamiltonians
+		H0 = H_d.toarray() + 2.0 * H_c.toarray()
+		H1 = H_d.toarray() - 2.0 * H_c.toarray()
+
+		decoherence_type = args.deco_type
+		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n
+		gamma = [gamma_i/np.sqrt(8) for gamma_i in gamma] 
+		L = []
+		for i in range(n+n_system):
+			L_term = [[decoherence_type, [[gamma[i], i]] ]]
+			H_temp = hamiltonian(L_term, [], basis=basis, dtype=np.complex128, check_herm=False)
+			L.append(np.array(H_temp.toarray()))
+		if args.impl =='qutip':
+			H0 = qt.Qobj(H0)
+			H1 = qt.Qobj(H1)
+			L = [qt.Qobj(Li) for Li in L]
+
+		dyna_type = 'lind_new'
+		fid_type = 'GRK'
+
+	elif test_case =='TLSsec_bath_2qb':
 		'''Exploiting Non-Markovianity for Quantum Control'''
 		n1 = args.env_dim #number of bath qubits coupled to qubit 1
 		n2 = args.env_dim2 #number of bath qubits coupled to qubit 2
@@ -456,7 +509,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		dyna_type = 'lind_new'
 		fid_type = 'GRK'
 
-	elif args.testcase == 'Xmon_nb':
+	elif test_case == 'Xmon_nb':
 		dyna_type = 'cs'
 		fid_type = 'au'
 		n = args.env_dim #number of bath qubits
@@ -490,7 +543,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 	
-	elif args.testcase == 'dipole_VarStr':
+	elif test_case == 'dipole_VarStr':
 		dyna_type = 'cs'
 		fid_type = 'au'
 		n = args.env_dim #number of bath qubits
@@ -524,7 +577,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 	
-	elif args.testcase == '2qbiSWAP':
+	elif test_case == '2qbiSWAP':
 		dyna_type = 'cs'
 		fid_type = 'au'
 		n1 = args.env_dim #number of bath qubits coupled to qubit 1
@@ -568,7 +621,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		n=n1+n2
 		n_system = 2
 
-	elif args.testcase == '2qbCPHASE':
+	elif test_case == '2qbCPHASE':
 		dyna_type = 'cs'
 		fid_type = 'au'
 		n1 = args.env_dim #number of bath qubits coupled to qubit 1
@@ -612,7 +665,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		n=n1+n2
 		n_system = 2
 	
-	elif args.testcase == 'Lloyd_2qb':
+	elif test_case == 'Lloyd_2qb':
 		'''Proved to be universal:
 		https://arxiv.org/abs/1812.11075v1
 		On the universality of the quantum approximate optimization algorithm'''
@@ -661,7 +714,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() + H_cb.toarray()
 		n=n1+n2
 
-	elif args.testcase == 'Lloyd_var1':
+	elif test_case == 'Lloyd_var1':
 		'''Proved to be universal:
 		https://arxiv.org/abs/1812.11075v1
 		On the universality of the quantum approximate optimization algorithm
@@ -709,7 +762,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() + H_s.toarray() - H_c.toarray()
 		n=n1+n2
 
-	elif args.testcase == 'Lloyd_3qb':
+	elif test_case == 'Lloyd_3qb':
 		'''Proved to be universal:
 		[1] https://arxiv.org/abs/1812.11075v1
 		[2] On the universality of the quantum approximate optimization algorithm
@@ -760,7 +813,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		H1 = H_d.toarray() + H_cb.toarray()
 		n=n1+n2
 
-	elif args.testcase == 'XXnYY':
+	elif test_case == 'XXnYY':
 		dyna_type = 'cs'
 		fid_type = 'au'
 		n1 = args.env_dim #number of bath qubits coupled to qubit 1
@@ -811,7 +864,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		n=n1+n2
 		n_system = 2
 	
-	elif args.testcase == 'XXYY_X':
+	elif test_case == 'XXYY_X':
 		'''Adding a single qubit X to counteract decoherence.'''
 		dyna_type = 'cs'
 		fid_type = 'au'
@@ -866,7 +919,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		n=n1+n2
 		n_system = 2
 
-	elif args.testcase == 'XXpm':
+	elif test_case == 'XXpm':
 		'''2-qubit XX. 
 		From 'Environment-invariant measure of distance between evolutions of an open quantum system' 
 		Seems to be wrong. Not contiuning.
@@ -922,7 +975,7 @@ def setup(args, if_no_bath = False, couplings = None):
 		n=n1+n2
 		n_system = 2
 
-	elif args.testcase == 'result_analysis':
+	elif test_case == 'result_analysis':
 		'''Use this with caution!!!'''
 		dyna_type = 'cs'
 		fid_type = 'au'
@@ -978,7 +1031,8 @@ def setup(args, if_no_bath = False, couplings = None):
 		psi1_input = np.kron(psi1_input, Id)
 	A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 	psi0_input = np.identity(2**(n+n_system)) #Start from identity
-	if args.testcase == ('TLSsec_bath' or 'TLSsec_bath_2qb'):
+	
+	if test_case in {'TLSsec_bath', 'TLSsec_bath_2qb', 'TLSsec_bath_lowStr'}:
 		#note that psi0 here is meaningless
 		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args,
 						couplings = A, lind_L = L, n_s = n_system)

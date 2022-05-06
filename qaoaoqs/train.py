@@ -73,7 +73,7 @@ def parse_args():
 						'dipole', 'XmonTLS', 'Xmon_nb','NoBath','dipole_VarStr', 
 						'2qbiSWAP', '2qbCPHASE', 'XXnYY', 'XXpm', 'XXYY_X', 
 						'Lloyd_2qb', 'Lloyd_3qb', 'Lloyd_var1',
-						'TLS_bb', 'Heis_bbzz', 'TLSsec_bath'],
+						'TLS_bb', 'Heis_bbzz', 'TLSsec_bath', 'TLSsec_bath_lowStr'],
 						default='cs_au', help='different test case for the problem')
 	qc_arg.add_argument('--env_dim', type=int, default=0,
 						help='number of bath spins in central spin model')

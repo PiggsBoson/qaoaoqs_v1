@@ -1081,7 +1081,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 	psi0_input = np.identity(2**(n+n_system)) #Start from identity
 	
-	if test_case in {'TLSsec_bath', 'TLSsec_bath_2qb', 'TLSsec_bath_lowStr'}:
+	if test_case in {'TLSsec_bath', 'TLSsec_bath_2qb', 'TLSsec_bath_lowStr', 'Koch_1qb'}:
 		#note that psi0 here is meaningless
 		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args,
 						couplings = A, lind_L = L, n_s = n_system)

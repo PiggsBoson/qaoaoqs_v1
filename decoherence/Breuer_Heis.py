@@ -61,7 +61,7 @@ def main():
     A = 1
     N_array = [1,2,3,4,5,6,10,20,50,100]#range(1,7)#
     colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a']
-    t_array = np.linspace(0,0.1/A,100)
+    t_array = np.linspace(0,50/A,100)
     plot_opt = pop_0
     omega0 = 1
     sys_init = np.array([1.,0.])#np.random.uniform(size =2)

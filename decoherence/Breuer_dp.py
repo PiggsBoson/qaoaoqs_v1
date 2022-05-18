@@ -54,6 +54,7 @@ def main():
     colors = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a']
     plt.rcParams.update({'font.size': 14})
 
+    t_TLS = t_array/(8 *2*np.pi)
     y_infarray = []
     i = 0
     for N in N_array:
@@ -66,7 +67,7 @@ def main():
             rho_N = v2rho(v3t,v_pmt)
             temp = np.trace(rho_N@observable)
             y_array.append(temp)
-        plt.plot(t_array, y_array ,color = colors[i], label = 'n='+str(N))
+        plt.plot(t_TLS, y_array ,color = colors[i], label = 'n='+str(N))
 
         #comparing with numerical simulation to check correctness
         # H = get_Ham(N, True, 'Breuer_dp', alpha = alpha_scaled)
@@ -85,9 +86,9 @@ def main():
         v3tinf = f3inf*v_0[2]
         rho_inf = v2rho(v3tinf, v_pmtinf)
         y_infarray.append(np.trace(rho_inf@observable))
-    plt.plot(t_array, y_infarray, color = colors[i],label = 'n=inf')
+    plt.plot(t_TLS, y_infarray, color = colors[i],label = 'n=inf')
 
-    plt.xlabel(r't')
+    plt.xlabel(r'$t$ (ns)')
     plt.ylabel(r'$\rho_{00}$')
     # plt.ylabel('Re(rho_01)')
     plt.legend()

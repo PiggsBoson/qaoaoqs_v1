@@ -41,6 +41,8 @@ def target_uni(uni_name):
 
 def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	'''Return the quantum manager corresponding the test case'''
+	if couplings:
+		A = np.array(couplings)
 	if alt_testcase:
 		test_case = alt_testcase
 	else: 
@@ -277,12 +279,13 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		dyna_type = 'cs'
 		fid_type = 'au'
 		n = args.env_dim #number of bath qubits
-		if args.cs_coup == 'eq':
-			A = np.ones(n)
-			A /= 200
-		elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
-			A = np.random.uniform(0.5, 5, n)
-			A /= 1000 #Scale to desired strength
+		if not couplings:
+			if args.cs_coup == 'eq':
+				A = np.ones(n)
+				A /= 200
+			elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
+				A = np.random.uniform(0.5, 5, n)
+				A /= 1000 #Scale to desired strength
 		
 		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
@@ -1032,7 +1035,6 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		n2 = args.env_dim2 #number of bath qubits coupled to qubit 2
 		n_system = 2
 		
-		A = np.array(couplings, ndmin=1)
 		A /= args.cs_coup_scale #Make sure it's not scaled twice
 		g = 2.5/1000 #qubit-qubit coupling constant
 

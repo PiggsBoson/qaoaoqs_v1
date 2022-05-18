@@ -59,27 +59,25 @@ author: Jiahao Yao
 def plot_data(data, value="mean_reward"):
     if isinstance(data, list):
         data = pd.concat(data, ignore_index=True)
-    
-    if value == "log_Fid":    
-        logfid = [-np.log10(1 - f) for f in data["max_reward"]]# Plot log fidelity
-        data['log_Fid'] = logfid
+        
+    logfid = [-np.log10(1 - f) for f in data[value]]# Plot log fidelity
+    data['log_Fid'] = logfid
     
     plt.rcParams.update({'font.size': 14})
 
     # sns.set(style="darkgrid", font_scale=1.5)
     # print(data)
     fig, ax = plt.subplots()
-    sns.lineplot(data=data, x="iter", y=value, hue="Condition", palette = sns.color_palette("husl", 4))
+    sns.lineplot(data=data, x="iter", y='log_Fid', hue="Condition") #sns plots 95% confidence interval
 
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles=handles, labels=labels)
     # plt.legend( loc='best').set_draggable(True)
     # eps = 1e-2
     # plt.ylim(0.0-eps,1.0+eps)
-    if value == "log_Fid":
-        plt.ylabel(r'$\displaystyle -\log_{10}(1-F(\theta))$')
-    else:
-        plt.ylabel(r'$\displaystyle F(\theta)$')
+    plt.ylabel(r'$\displaystyle -\log_{10}(1-F(\theta))$')
+    # else:
+    #     plt.ylabel(r'$\displaystyle F(\theta)$')
     plt.tight_layout()
     plt.show()
 

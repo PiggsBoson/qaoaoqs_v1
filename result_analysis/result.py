@@ -27,6 +27,9 @@ class Result():
 		self.exp_name = exp_name
 		self.data = data
 		self.params = params
+		if params.testcase == 'TLSsec_bath':
+			self.data["T_tot"] *= 8
+
 
 	def naive_rd_state(self,qubit_ct=1):
 		'''This one will give a arc on Bloch sphere'''
@@ -60,7 +63,10 @@ class Result():
 			qubit_ct -- number of system qubit
 			temp -- bath temperature
 		"""
-		quma = sys_setup.setup(self.params)
+		if hasattr(self.params, 'couplings'):
+			quma = sys_setup.setup(self.params, couplings = self.params.couplings)
+		else:
+			quma = sys_setup.setup(self.params)
 		qubit_ct = int(np.log2(len(quma.psi1)))
 		target_uni = quma.psi1
 		outputs = []

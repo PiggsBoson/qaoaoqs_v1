@@ -49,7 +49,7 @@ def plot_data(data, args):
 					line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group_2nd, color = line_color, alpha = 1.0, label = str(name).upper() + ' , ' + args.group_by_2nd + ' = ' +str(name_2nd))
 				else: 
 					line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group_2nd, color = line_color, alpha = 1.0, label = args.group_by + ' = ' +str(int(name)) + ' , ' + args.group_by_2nd + ' = ' +str(name_2nd))
-				print(max(line.get_data()[1])) #Print highest fidelity
+				print(line.get_data()) #Print highest fidelity
 				if args.option == 'state_fid':
 					plt.errorbar(args.x, 'state_fid_log' , yerr = 'state_fid_log_sd',ls = '-', marker = 'o', data = group_2nd, color = line_color, alpha = 0.5, capsize = 5, label='_nolegend_')
 				i+=1
@@ -57,6 +57,7 @@ def plot_data(data, args):
 			line_color = colors[i]
 			line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group, color = line_color, alpha = 1.0, label = args.group_by + ' = ' +str(name))
 			print(name)
+			print(line.get_data()) 
 			print(max(line.get_data()[1])) #Print highest fidelity
 			if args.option == 'comparison':
 				i+=1
@@ -102,17 +103,24 @@ def plot_data(data, args):
 
 	if args.title != None:
 		plt.title(args.title)
+	
 	if args.legend:
 		plt.legend(args.legend, fontsize = ftsz)
+	elif args.legend_preset =='Lindn0':
+		plt.legend([r'$T_1^{sys} = 500$ ns', 
+		r'$T_1^{sys} = 1$ $\mu$s',
+		r'$T_1^{sys} = 5$ $\mu$s'])
+	elif args.legend_preset =='LindnX':
+		# plt.legend([r'$T_1^{sys} = 500$ ns, $T_1^{TLS} = 200$ ns', 
+		# r'$T_1^{sys} = 1$ $\mu$s, $T_1^{TLS} = 500$ ns',
+		# r'$T_1^{sys} = 5$ $\mu$s, $T_1^{TLS} = 1$ $\mu$s'])
+		plt.legend([r'$T_1^{sys} = 5$ $\mu$s, $T_1^{TLS} = 1$ $\mu$s'])
+	elif args.legend_preset =='TLS2qb':
+		plt.legend([r'$n_1=n_2=0$ (No bath)', '$n_1=1$,$n_2=0$', '$n_1=n_2=2$',])
 	else:
 		plt.legend(fontsize = ftsz)
-	'''Hardcoding some of the legends...'''
-	# plt.legend([r'$T_1^{sys} = 500$ ns', 
-	# r'$T_1^{sys} = 1$ $\mu$s',
-	# r'$T_1^{sys} = 5$ $\mu$s'])
-	# plt.legend([r'$T_1^{sys} = 500$ ns, $T_1^{TLS} = 200$ ns', 
-	# r'$T_1^{sys} = 1$ $\mu$s, $T_1^{TLS} = 500$ ns',
-	# r'$T_1^{sys} = 5$ $\mu$s, $T_1^{TLS} = 1$ $\mu$s'])
+	
+	
 
 
 	plt.xticks(fontsize=ftsz)	
@@ -270,7 +278,7 @@ def get_datasets(fpath, args = None):
 	
 	result = Result(fpath, datasets, ns_params)
 	# print(type(datasets["testcase"].values[0]))
-	if datasets["testcase"].values[0] == "XmonTLS":
+	if datasets["testcase"].values[0] in {"XmonTLS", 'TLSsec_bath_lowStr', 'Koch_1qb','TLSsec_bath', 'Lloyd_var1'}:
 		#Use physical timescale
 		result.transmon_time()
 	if args!= None:
@@ -302,6 +310,7 @@ def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('logdir', nargs='*')
 	parser.add_argument('--legend', nargs='*', default= None)
+	parser.add_argument('--legend_preset', default= None)
 	parser.add_argument('--x', default='T_tot')
 	parser.add_argument('--value', 
 						choices=['fid','log_fid','T_tot','iter', 'no_bath_fid','no_bath_fid_log', 'HA_frac'],

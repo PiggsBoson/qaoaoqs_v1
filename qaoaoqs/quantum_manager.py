@@ -149,10 +149,11 @@ class QuManager():
 			for i in range(len(protocol)):
 				if i % 2 == 0:
 					simulator.setH(self.H0)
-					u = simulator.simulate_closed(protocol[i])
+					simulator.simulate_closed(protocol[i])
 				else:
 					simulator.setH(self.H1)
-					u = simulator.simulate_closed(protocol[i])
+					simulator.simulate_closed(protocol[i])
+			u = simulator.getRho()
 			if self.return_uni:
 				return u
 			

@@ -169,7 +169,7 @@ def train(seed, exp_dir):
 	###############################################
 
 	# Set random seeds
-	tf.random.set_seed(seed)
+	tf.set_random_seed(seed)
 	np.random.seed(seed)
 	params = vars(args)
 	params['seed'] = seed

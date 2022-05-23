@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -t 1,5,6,50
+#$ -t 1-7
 #$ -cwd             # Current working directory
 #$ -N QAOA_array      # Name of submitted job
 #$ -S /bin/bash     # Shell for execution
@@ -21,7 +21,9 @@ echo $JOB_ID
 script_path=$HOME/qaoaoqs_v1/qaoaoqs/train.py
 results_path=$HOME/QAOA_results/tests/
 
-conda run -n qaoa python $script_path --exp_name $exp_name --path $results_path --p 20 --num_iters 2000 -lr 1e-2 --testcase XmonTLS --env_dim 2 --lr_decay -b 2048 -e 5 --au_uni Had --cs_coup uneq --distribution logit-normal --protocol_renormal True --impl quspin --T_tot $SLURM_ARRAY_TASK_ID --scale 1.0
+conda activate qrl
+
+python $script_path --exp_name $exp_name --path $results_path --p 20 --num_iters 2000 -lr 1e-2 --testcase XmonTLS --env_dim 2 --lr_decay -b 2048 -e 5 --au_uni Had --cs_coup uneq --distribution logit-normal --protocol_renormal True --impl quspin --T_tot $SGE_TASK_ID --scale 1.0
 # Create file to show that job is completed
 touch a_COMPLETED_ti${SGE_TASK_ID}.ji$JOB_ID.log
 

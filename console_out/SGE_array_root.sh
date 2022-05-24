@@ -21,8 +21,6 @@ echo $JOB_ID
 script_path=$HOME/qaoaoqs_v1/qaoaoqs/train.py
 results_path=$HOME/QAOA_results/tests/
 
-ARCH="" ./configure
-
 conda run -n qrl python $script_path --exp_name $exp_name --path $results_path --p 20 --num_iters 2000 -lr 1e-2 --testcase XmonTLS --env_dim 2 --lr_decay -b 2048 -e 5 --au_uni Had --cs_coup uneq --distribution logit-normal --protocol_renormal True --impl quspin --T_tot $SGE_TASK_ID --scale 1.0
 # Create file to show that job is completed
 touch a_COMPLETED_ti${SGE_TASK_ID}.ji$JOB_ID.log

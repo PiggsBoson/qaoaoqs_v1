@@ -5,7 +5,7 @@
 #$ -S /bin/bash     # Shell for execution
 #$ -l h_rt=90:00:00 # Time limit of job in hh:mm:ss
 #$ -l mem_free=32G   # Amount of memory requested for job
-#$ -l h="*11|*3"
+#$ -l h="(compute-0-11)|(compute-0-3)"
 
 #$ -j y             # Combine output and error streams into single file
 

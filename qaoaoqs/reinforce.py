@@ -1,6 +1,6 @@
 from scipy.sparse.linalg import cg
 import scipy
-from utils import *
+from qaoaoqs.utils import *
 import numpy as np
 import random
 import tensorflow as tf

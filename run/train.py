@@ -8,7 +8,7 @@ import tensorflow as tf
 
 from qaoaoqs.reinforce import Reinforce
 from qaoaoqs.quantum_manager import *
-import scp_convex_mod as scp
+import qaoaoqs.scp_convex_mod as scp
 import cvxpy as cp
 
 import os

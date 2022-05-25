@@ -6,8 +6,8 @@ import scipy as sp
 import scipy.optimize as opt
 import tensorflow as tf
 
-from reinforce import Reinforce
-from quantum_manager import *
+from qaoaoqs.reinforce import Reinforce
+from qaoaoqs.quantum_manager import *
 import scp_convex_mod as scp
 import cvxpy as cp
 
@@ -29,7 +29,7 @@ from multiprocessing import Process
 from multiprocessing import Pool
 from joblib import Parallel, delayed
 
-import sys_setup
+import qaoaoqs.sys_setup as sys_setup
 
 def setup_logger(name, log_file, level=logging.INFO):
 	"""Function setup as many loggers as you want"""

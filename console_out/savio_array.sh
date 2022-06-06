@@ -2,7 +2,6 @@
 #
 #SBATCH --job-name=QAOA_array
 #SBATCH --array=40
-#SBATCH --output=PG_rn_Heis_e3_LM_n4eqp60T%a_%A.log
 #
 #SBATCH --account=fc_vaet
 #
@@ -15,15 +14,16 @@
 #
 #SBATCH --time=72:00:00
 
-# Print the task id.
+exp_name=Had_PGszXmon_LM_n2eqp20T
+#SBATCH --output=${exp_name}%a_%A.log
+
+hostname
+date
 echo "My SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 
-source ~/.bashrc
-module purge #Kill all active modules
-conda init bash
-conda deactivate
-conda deactivate
-conda activate /global/scratch/users/zhibo_w_yang/envs/qrl
+script_path=/global/home/users/zhibo_w_yang/codes/qaoaoqs_v1/run/train.py
+results_path=/global/scratch/users/zhibo_w_yang/PGQAOA_results/
 
-python /global/home/users/zhibo_w_yang/codes/PGQAOA_OpenQuantumSystem/train.py --exp_name PG_rn_Heis_e3_LM_n4eqp60T$SLURM_ARRAY_TASK_ID --path /global/scratch/users/zhibo_w_yang/PGQAOA_results/PG_new --p 60 --num_iters 2000 -lr 1e-2 --testcase cs_au --env_dim 4 --lr_decay -b 2048 -e 3 --au_uni ST --cs_coup eq --distribution logit-normal --protocol_renormal True --impl quspin --T_tot $SLURM_ARRAY_TASK_ID --scale 1.0
+conda activate qrl
 
+python $script_path --exp_name $exp_name${SLURM_ARRAY_TASK_ID} --path $results_path --p 20 --num_iters 2000 -lr 1e-2 --testcase XmonTLS --env_dim 2 --lr_decay -b 2048 -e 5 --au_uni Had --cs_coup uneq --distribution logit-normal --protocol_renormal True --impl quspin --T_tot $SLURM_ARRAY_TASK_ID --scale 1.0

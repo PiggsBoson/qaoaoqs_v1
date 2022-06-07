@@ -24,6 +24,7 @@ echo "My SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 script_path=/global/home/users/zhibo_w_yang/codes/qaoaoqs_v1/run/train.py
 results_path=/global/scratch/users/zhibo_w_yang/PGQAOA_results/
 
+conda init bash
 conda activate qrl
 
 python $script_path --exp_name $exp_name${SLURM_ARRAY_TASK_ID} --path $results_path --p 20 --num_iters 2000 -lr 1e-2 --testcase XmonTLS --env_dim 2 --lr_decay -b 2048 -e 5 --au_uni Had --cs_coup uneq --distribution logit-normal --protocol_renormal True --impl quspin --T_tot $SLURM_ARRAY_TASK_ID --scale 1.0

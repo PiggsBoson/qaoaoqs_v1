@@ -440,7 +440,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 
 		decoherence_type = args.deco_type
 		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n
-		gamma = [gamma_i/np.sqrt(8) for gamma_i in gamma] 
+		gamma = [gamma_i/np.sqrt(8) for gamma_i in gamma] #Strength Scaling
 		L = []
 		for i in range(n+n_system):
 			L_term = [[decoherence_type, [[gamma[i], i]] ]]
@@ -548,37 +548,41 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		exact match of their parameters'''
 		n_system = 1
 		n = args.env_dim #number of bath qubits
-		if args.cs_coup == 'eq':
-			A = np.ones(n)
-			A /= 200
-		elif args.cs_coup == 'uneq':
-			A = np.random.uniform(0.5, 5, n)
-			A /= 1000 #Scale to desired strength
-
-		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
-		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
+		if not couplings:
+			if args.cs_coup == 'eq':
+				A = np.ones(n)
+				A /= 200
+			elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
+				A = np.random.uniform(0.5, 5, n)
+				A /= 1000 #Scale to desired strength
+		A *= 0.06 #60MHz
+		
+		Delta = [5.0, 5.0-0.55, 5.0-0.55-0.45] #Frequency list, 5GHz
 
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n+1)
+		
 		# compute site-coupling lists
 		z_term = [[-Delta[i]/2, i] for i in range(n+1)]
 		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
-		ctr_term = [[1.0, 0]]
+		ctr_term = [[5.0, 0]]
+
 		#operator string lists
 		static_d = [['z', z_term], 
 					['-+', couple_term], ['+-', couple_term]]
-		static_c = [['z', ctr_term]]
+		static_c = [['z',ctr_term]]
+
 		#The drifting Hamiltonian
 		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
 		#The control Hamiltonian
 		H_c = hamiltonian(static_c, [], basis=basis, dtype=np.complex128)
+
 		#QAOA Hamiltonians
-		H0 = H_d.toarray() + 2.0 * H_c.toarray()
-		H1 = H_d.toarray() - 2.0 * H_c.toarray()
+		H0 = H_d.toarray() + 2*H_c.toarray()
+		H1 = H_d.toarray() - 2*H_c.toarray()
 
 		decoherence_type = args.deco_type
 		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n
-		gamma = [gamma_i/np.sqrt(8) for gamma_i in gamma] 
 		L = []
 		for i in range(n+n_system):
 			L_term = [[decoherence_type, [[gamma[i], i]] ]]

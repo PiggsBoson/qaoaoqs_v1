@@ -74,7 +74,7 @@ def parse_args():
 						'2qbiSWAP', '2qbCPHASE', 'XXnYY', 'XXpm', 'XXYY_X', 
 						'Lloyd_2qb', 'Lloyd_3qb', 'Lloyd_var1',
 						'TLS_bb', 'Heis_bbzz', 'TLSsec_bath', 'TLSsec_bath_lowStr', 'Koch_1qb',
-						'Koch_paper_1qb_noLind'],
+						'Koch_paper_1qb_noLind', 'Koch_paper_1qb'],
 						default='cs_au', help='different test case for the problem')
 	qc_arg.add_argument('--env_dim', type=int, default=0,
 						help='number of bath spins in central spin model')

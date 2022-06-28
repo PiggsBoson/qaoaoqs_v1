@@ -597,31 +597,30 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		fid_type = 'GRK'
 
 	elif test_case =='TLSsec_bath_2qb':
-		'''Exploiting Non-Markovianity for Quantum Control'''
+		'''Derived from the testcase Lloyd_var1'''
 		n1 = args.env_dim #number of bath qubits coupled to qubit 1
 		n2 = args.env_dim2 #number of bath qubits coupled to qubit 2
 		n=n1+n2
 		n_system = 2
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n1+n2)
+			A /= 200
 		elif args.cs_coup == 'uneq':
-			A = np.random.uniform(0.1, 1, n)
-		A *= 0.04 #40MHz
+			A = np.random.uniform(0.5, 5, n1+n2)
+			A /= 1000 #Scale to desired strength
 		
-		g = 8.0 #qubit-qubit coupling constant
+		# E = np.linspace(1.0,1.0+0.1*(n-1), num=2) #TODO:qubit frequency
+		g = 1.0 #qubit-qubit coupling constant
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+n_system)
-		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
-		Delta = np.insert(Delta, 0, [1.0, 1.05]) #Insert the qubit frequency
-		Delta *= 8.0 #8GHz
-
+		basis = spin_basis_1d(L = n1+n2+n_system)
+		
 		# compute site-coupling lists
 		couple_term_1 = [[A[i]/2, 0, i+2] for i in range(n1)]
 		couple_term_2 = [[A[i+n1]/2, 1, i+2+n1] for i in range(n2)]
-		x_term = [[8.0, i] for i in range(2)]
+		x_term = [[1.0, i] for i in range(2)]
 		entangle_term = [[- g/2, 0, 1]]
-		z_term = [[-Delta[i]/2, i] for i in range(n+n_system)]
+		z_term = [[1.0, 0], [1.05, 1]]
 
 		#operator string lists
 		static_d = [['-+', couple_term_1], ['+-', couple_term_1], 
@@ -638,9 +637,11 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		#QAOA Hamiltonians
 		H0 = H_d.toarray() + H_s.toarray() + H_c.toarray()
 		H1 = H_d.toarray() + H_s.toarray() - H_c.toarray()
-
+		
 		decoherence_type = args.deco_type
 		gamma = [np.sqrt(1/args.T1_sys)]*n_system + [np.sqrt(1/args.T1_TLS)]*n 
+		gamma = [gamma_i/np.sqrt(8) for gamma_i in gamma] #Strength Scaling
+
 		L = []
 		for i in range(n+n_system):
 			L_term = [[decoherence_type, [[gamma[i], i]] ]]

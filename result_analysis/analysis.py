@@ -101,7 +101,7 @@ def plot_data(data, args):
 	else:
 		plt.ylabel(args.value, fontsize=ftsz)
 
-	if args.title != None:
+	if args.title:
 		plt.title(args.title)
 	
 	if args.legend:
@@ -281,6 +281,10 @@ def get_datasets(fpath, args = None):
 	if datasets["testcase"].values[0] in {"XmonTLS", 'TLSsec_bath_lowStr', 'Koch_1qb','TLSsec_bath', 'Lloyd_var1'}:
 		#Use physical timescale
 		result.transmon_time()
+	elif datasets["testcase"].values[0] in {'Koch_paper_1qb_noLind', 'Koch_paper_1qb'}:
+		#Use physical timescale
+		result.transmon_time()
+
 	if args!= None:
 		if args.sanity_check:
 			#For uneq case, the coupling constants are not kept track of, so can't do this check.   TODO: update the record-keeping later

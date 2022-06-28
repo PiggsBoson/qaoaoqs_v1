@@ -149,6 +149,9 @@ class Result():
 	def transmon_time(self):
 		self.data.insert(len(self.data.columns), 'TLS_T', self.data["T_tot"] / (8 *2*np.pi))
 
+	def transmon_time_1G(self):
+		self.data.insert(len(self.data.columns), 'TLS_T', self.data["T_tot"] / (2*np.pi))
+
 	def no_bath(self):
 		'''Checking the implemented unitary without bath using a protocol optimized in the presence of bath.'''
 		quma = sys_setup.setup(self.params, if_no_bath = True)

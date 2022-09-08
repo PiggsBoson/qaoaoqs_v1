@@ -31,8 +31,6 @@ def plot_data(data, args):
 	# sns.set(style="darkgrid", font_scale=1.0)
 	data.sort_values(by = [args.x], inplace=True)
 
-	data.rename(columns={"env_dim": "n"}, inplace = True) #For better readability
-	data[['n']] = data[['n']].astype(int)
 
 	groupped = data.fillna(-1).groupby(args.group_by) #fillna() fills -1 to missing parameter entries due to version differences.
 	i=0
@@ -40,7 +38,7 @@ def plot_data(data, args):
 		if args.filter:
 			if name != args.filter:
 				continue
-		if args.group_by_2nd != None:
+		if args.group_by_2nd:
 			groupped_2nd = group.groupby(args.group_by_2nd)
 			for name_2nd, group_2nd in groupped_2nd:
 				line_color = colors[i]
@@ -48,27 +46,29 @@ def plot_data(data, args):
 				if args.group_by == 'approach':
 					line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group_2nd, color = line_color, alpha = 1.0, label = str(name).upper() + ' , ' + args.group_by_2nd + ' = ' +str(name_2nd))
 				else: 
-					line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group_2nd, color = line_color, alpha = 1.0, label = args.group_by + ' = ' +str(int(name)) + ' , ' + args.group_by_2nd + ' = ' +str(name_2nd))
+					line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group_2nd, color = line_color, alpha = 1.0, label = args.group_by + ' = ' +str(name) + ' , ' + args.group_by_2nd + ' = ' +str(name_2nd))
 				print(line.get_data()) #Print highest fidelity
 				if args.option == 'state_fid':
 					plt.errorbar(args.x, 'state_fid_log' , yerr = 'state_fid_log_sd',ls = '-', marker = 'o', data = group_2nd, color = line_color, alpha = 0.5, capsize = 5, label='_nolegend_')
 				i+=1
 		else:
 			line_color = colors[i]
-			line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group, color = line_color, alpha = 1.0, label = args.group_by + ' = ' +str(name))
-			print(name)
-			print(line.get_data()) 
-			print(max(line.get_data()[1])) #Print highest fidelity
+			if args.x == "cp_str":
+				line = plt.errorbar(args.x, args.value, yerr = 'log_fid_std', ls = '-', marker = 'o', data = group, color = line_color, alpha = 1.0,capsize = 5, label = name)
+			else:
+				line, = plt.plot(args.x, args.value,ls = '-', marker = 'o', data = group, color = line_color, alpha = 1.0, label = args.group_by + ' = ' +str(name))
+				print(name)
+				print(line.get_data()) 
+				print(max(line.get_data()[1])) #Print highest fidelity
+
 			if args.option == 'comparison':
 				i+=1
 				line.set_label('QAOA control')
-				# if args.value =='log_fid':
 				plt.plot(args.x, 'log_fid_no',ls = '-', marker = 'o', data = group, color = colors[i], label = 'No Control') #only log fidelity is used
-				# else:
-					# plt.plot(args.x, 'no_opt',ls = '-', marker = 'o', data = group, label = 'No Control')
+
 			elif args.option == 'state_fid':
 				# line.set_label('Unitary')
-				plt.errorbar(args.x, 'state_fid_log' , yerr = 'state_fid_log_sd',ls = '-', marker = 'o', data = group, color = line_color, alpha = 0.5, capsize = 5, label='_nolegend_')
+				plt.errorbar(args.x, 'state_fid_log' , yerr = 'state_fid_log_sd',ls = '--', marker = 'o', data = group, color = line_color, alpha = 0.5, capsize = 5, label='_nolegend_')
 			elif args.option == 'GRK':
 				line.set_label('Unitary')
 				plt.plot(args.x, 'GRK_fid_log',ls = '-', marker = 'o', data = group, label = 'GRK')
@@ -88,11 +88,14 @@ def plot_data(data, args):
 		plt.xlabel(r'$ T$', fontsize=ftsz)
 	elif args.x == "TLS_T":
 		plt.xlabel(r'$T$ (ns)', fontsize=ftsz)
+	elif args.x == "cp_str":
+		plt.xscale("log")
+		plt.xlabel("Dipolar Coupling Strength", fontsize=ftsz)
 	else:
 		plt.xlabel(args.x, fontsize=ftsz)
 
 	if args.value == "log_fid":
-		plt.ylabel(r'$ -\log_{10}(1-F(\theta_p))$', fontsize=ftsz)
+		plt.ylabel(r'$ -\log_{10}(1-F(\theta^*))$', fontsize=ftsz)
 		plt.ylim(0, args.ylim)
 	elif args.value == "fid":
 		plt.ylabel(r'$ F(\theta_p)$', fontsize=ftsz)
@@ -111,10 +114,10 @@ def plot_data(data, args):
 		r'$T_1^{sys} = 1$ $\mu$s',
 		r'$T_1^{sys} = 5$ $\mu$s'])
 	elif args.legend_preset =='LindnX':
-		# plt.legend([r'$T_1^{sys} = 500$ ns, $T_1^{TLS} = 200$ ns', 
-		# r'$T_1^{sys} = 1$ $\mu$s, $T_1^{TLS} = 500$ ns',
-		# r'$T_1^{sys} = 5$ $\mu$s, $T_1^{TLS} = 1$ $\mu$s'])
-		plt.legend([r'$T_1^{sys} = 5$ $\mu$s, $T_1^{TLS} = 1$ $\mu$s'])
+		plt.legend([r'$T_1^{sys} = 500$ ns, $T_1^{TLS} = 200$ ns', 
+		r'$T_1^{sys} = 1$ $\mu$s, $T_1^{TLS} = 500$ ns',
+		r'$T_1^{sys} = 5$ $\mu$s, $T_1^{TLS} = 1$ $\mu$s'])
+		# plt.legend([r'$T_1^{sys} = 5$ $\mu$s, $T_1^{TLS} = 1$ $\mu$s'])
 	elif args.legend_preset =='TLS2qb':
 		plt.legend([r'$n_1=n_2=0$ (No bath)', '$n_1=1$,$n_2=0$', '$n_1=n_2=2$',])
 	else:
@@ -149,10 +152,9 @@ def plot_his(data, args):
 		plt.hist([grpA, grpB],HIST_BINS)
 		plt.savefig(str(i))
 
-def plot_Bapat(data, args):
+def plot_Bapat_n(data, args):
 	'''Quantum approximate optimization of the long-range Ising model with a trapped-ion quantum simulator Fig. S1
 	Not working for fixed p and T
-	Will check normalized for different p
 	'''
 	data.sort_values(by = [args.x], inplace=True)
 	for i in range(len(data['duration'].to_numpy())):
@@ -160,6 +162,24 @@ def plot_Bapat(data, args):
 		grpA = [protocol[i] for i in range(len(protocol)) if not i%2]
 		# grpB = [protocol[i] for i in range(len(protocol)) if i%2]
 		plt.plot(grpA, label = i)
+		# plt.plot(grpB)
+	plt.legend()
+	plt.show()
+
+def plot_Bapat_p(data, args):
+	'''Quantum approximate optimization of the long-range Ising model with a trapped-ion quantum simulator Fig. S1
+	Normalized for different p
+	'''
+	data.sort_values(by = [args.x], inplace=True)
+	for protocol in data['duration'].to_numpy():
+		protocol = protocol[0]
+		p = len(protocol)//2
+		x = []
+		for i in range(p):
+			x.append(i/(p-1))
+		grpA = [protocol[i]*p for i in range(len(protocol)) if not i%2]
+		# grpB = [protocol[i] for i in range(len(protocol)) if i%2]
+		plt.plot(x,grpA, label = p)
 		# plt.plot(grpB)
 	plt.legend()
 	plt.show()
@@ -208,7 +228,7 @@ def ani_his(data,args):
 	ani = FuncAnimation(fig, update_hist,frames = len(data['duration'].to_numpy()), fargs=(data['duration'].to_numpy(), ) )
 	plt.show()
 
-def get_table(filepath):
+def get_table(filepath) -> pd.DataFrame:
 
 	iter_list = []
 	duration_list = []
@@ -245,7 +265,7 @@ def get_table(filepath):
 # 	return quma.get_reward(data['duration'].to_numpy()[0][0])
 	
 
-def get_datasets(fpath, args = None):
+def get_datasets(fpath, args = None) -> Result:
 	datasets = []
 	params = [] #Try declearation first to maintain good practice
 	for root, dir, files in os.walk(fpath):
@@ -267,7 +287,12 @@ def get_datasets(fpath, args = None):
 	#Only keep the highest fidelity one
 	if isinstance(datasets, list):
 		datasets = pd.concat(datasets, ignore_index=True)
-	datasets = datasets[datasets["fid"]==datasets["fid"].max()]
+	
+	if args.x != "cp_str":	
+		datasets = datasets[datasets["fid"]==datasets["fid"].max()]
+
+	datasets["cp_str"] = [10**(-int(p)) for p in datasets["cp_str"]]
+
 	if not 'T_tot' in datasets.columns:
 		#Accomondate onlder versions
 		datasets.insert(len(datasets.columns), 'T_tot', np.sum(datasets['duration'].to_numpy()[0]))
@@ -277,13 +302,14 @@ def get_datasets(fpath, args = None):
 	ns_params = Namespace(**params)
 	
 	result = Result(fpath, datasets, ns_params)
-	# print(type(datasets["testcase"].values[0]))
-	if datasets["testcase"].values[0] in {"XmonTLS", 'TLSsec_bath_lowStr', 'Koch_1qb','TLSsec_bath', 'Lloyd_var1'}:
+	if datasets["testcase"].values[0] in {"XmonTLS", 'TLSsec_bath_lowStr', 'Koch_1qb','TLSsec_bath', 'Lloyd_var1', 'TLSsec_bath_2qb'}:
 		#Use physical timescale
-		result.transmon_time()
+		result.transmon_time(8)
 	elif datasets["testcase"].values[0] in {'Koch_paper_1qb_noLind', 'Koch_paper_1qb'}:
 		#Use physical timescale
-		result.transmon_time()
+		result.transmon_time(1)
+	else:
+		result.transmon_time(args.Ham_str)
 
 	if args!= None:
 		if args.sanity_check:
@@ -304,6 +330,9 @@ def get_datasets(fpath, args = None):
 			result.state_fid(args.temp, args.state_samples)
 		elif args.option == 'GRK':
 			result.GRK_fidelity(args.temp)
+		
+		if args.x == 'cp_str':
+			result.fid_stat()
 
 	return result
 
@@ -324,21 +353,25 @@ def main():
 	parser.add_argument('--filter', choices=['p','n','lind_gamma'],default=None)
 	# parser.add_argument('--comparision', type=bool, default=False)
 	parser.add_argument('--title',type=str, default=None)
-	parser.add_argument('--option',choices=['plot', 'state_fid', 'comparison', 'plot_ab','plot_his','ani_his', 'Bapat', 'GRK'],default='plot')
+	parser.add_argument('--option',choices=['plot', 'state_fid', 'comparison', 'plot_ab','plot_his','ani_his', 'Bapat_n','Bapat_p', 'GRK'],default='plot')
 	parser.add_argument('--temp',choices=['zero', 'inf', 'rand'],default='zero')
 	parser.add_argument('--state_samples', type = int, default=100)
 	parser.add_argument('--sanity_check',type=bool, default=False)
 	parser.add_argument('--ylim',type = int, default=11)
+	parser.add_argument('--Ham_str', type = int, default = 1)
 
 	args = parser.parse_args()
 
 	data = pd.DataFrame()
-	results = []
 	
 	for logdir in args.logdir:
 		result = get_datasets(logdir, args)
 		# results.append(result)
 		data=data.append(result.data, ignore_index=True)
+	
+	data.rename(columns={"env_dim": "n"}, inplace = True) #For better readability
+	data[['n']] = data[['n']].astype(int)
+	
 	if args.option == 'plot_ab':
 		assert len(data) == 1, "Should only enter one experiment!"
 		plot_ab(data)
@@ -346,8 +379,10 @@ def main():
 		plot_his(data, args)
 	elif args.option == 'ani_his':
 		ani_his(data, args)
-	elif args.option == 'Bapat':
-		plot_Bapat(data, args)
+	elif args.option == 'Bapat_n':
+		plot_Bapat_n(data, args)
+	elif args.option == 'Bapat_p':
+		plot_Bapat_p(data, args)
 	else:
 		plot_data(data, args)
 

@@ -146,11 +146,8 @@ class Result():
 	def log_fid(self):
 		self.data.insert(len(self.data.columns), 'log_fid', -np.log10(1 - self.data["fid"]) )
 
-	def transmon_time(self):
-		self.data.insert(len(self.data.columns), 'TLS_T', self.data["T_tot"] / (8 *2*np.pi))
-
-	def transmon_time_1G(self):
-		self.data.insert(len(self.data.columns), 'TLS_T', self.data["T_tot"] / (2*np.pi))
+	def transmon_time(self, str):
+		self.data.insert(len(self.data.columns), 'TLS_T', self.data["T_tot"] / (str *2*np.pi))
 
 	def no_bath(self):
 		'''Checking the implemented unitary without bath using a protocol optimized in the presence of bath.'''
@@ -217,3 +214,11 @@ class Result():
 		result = np.sum(outputs)
 		print(result)
 		self.data.insert(len(self.data.columns), 'GRK_fid_log', -np.log10(1 - result) )
+
+	def fid_stat(self):
+		'''
+		Compute the mean and std from all the simulations
+		'''
+		self.data.insert(len(self.data), "log_fid_std", self.data["log_fid"].std())
+		self.data[0,"log_fid"] = self.data["log_fid"].mean()
+		self.data = self.data.head(1)

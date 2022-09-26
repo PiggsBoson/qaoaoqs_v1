@@ -30,8 +30,8 @@ class QuManager():
 			
 
 		Keyword Arguments:
-			n -- number of bath qubits coupled to qubit 1
-			n2 -- number of bath qubits coupled to qubit 2
+			n_s -- number of system qubits
+			n_b -- number of bath qubits and ancilla
 			fid_fix -- method to fix time negativity
 			H_ns1 -- noise hamiltonian gate 1
 			H_ns2 -- noise hamiltonian gate 2
@@ -39,30 +39,22 @@ class QuManager():
 			renormal -- Whether renormalizing the protocol in computing the fidelity
 		"""
 		self.psi0 = psi0 #Added. Used for density matrix
-		self.imag_unit = np.complex64(1.0j)
 		self.psi1 = psi1# .reshape(psi1.shape[0], 1) #Change here
 
 		self.H1 = H1
 		self.H0 = H0
-
-		# self.H0_eval, self.H0_evec = la.eigh(H0)
-		# self.H0_eval = np.expand_dims(self.H0_eval, axis=-1) #This decomposition aids efficiency
-
-		# self.H1_eval, self.H1_evec = la.eigh(H1)
-		# self.H1_eval = np.expand_dims(self.H1_eval, axis=-1) #This decomposition aids efficiency
 
 		self.dyna_type = dyna_type
 		self.fid_type = fid_type
 		
 		self.couplings = couplings
 
+		self.n_s = kwargs.get('n_s')
+		self.n_b = kwargs.get('n_b')
+		self.N_s = 2**self.n_s
+		self.N_b = 2**self.n_b
 		if args: 
 			self.impl = args.impl
-			self.n = args.env_dim
-			if hasattr(args,'env_dim2'):
-				self.n2 = args.env_dim2
-			else:
-				self.n2 = 0
 
 			self.fid_fix = args.fid_fix
 			self.fix_adj = args.fid_adj
@@ -82,8 +74,8 @@ class QuManager():
 		else:
 		#enables convenient implementation, especially for testing
 			self.impl = kwargs.get('impl', None)
-			self.n = kwargs.get('env_dim')
-			self.n2 = kwargs.get('env_dim2',0)
+			self.n1 = kwargs.get('n1')
+			self.n2 = kwargs.get('n2',0)
 		
 			self.renormal = kwargs.get('protocol_renormal', False)
 			self.fid_fix = kwargs.get('fid_fix', None)
@@ -99,21 +91,18 @@ class QuManager():
 
 		
 		if self.dyna_type == 'lind_new':
-			n_s = kwargs.get('n_s')
-			self.N_s = 2**n_s
-			self.simulator = Dyna(psi0, H0, N=2**(self.n+1), L = kwargs.get('lind_L',None), impl = self.impl, t_steps = args.ode_steps)
-			n_b = self.n+self.n2
-			self.N_b = 2**n_b
+			self.simulator = Dyna(psi0, H0, N=self.N_s + self.N_b, L = kwargs.get('lind_L',None), impl = self.impl, t_steps = args.ode_steps)
 
 			if args.b_temp == 'zero':
-				bath_init = np.zeros((2**n_b, 2**n_b), dtype='complex128')
+				bath_init = np.zeros((2**self.n_b, 2**self.n_b), dtype='complex128')
 				bath_init[0,0] = 1
 			elif args.b_temp == 'inf':
-				bath_init = np.identity(2**n_b, dtype='complex128') #unpolarized state of bath
-				bath_init /= 2**n_b #Normalize
+				bath_init = np.identity(2**self.n_b, dtype='complex128') #unpolarized state of bath
+				bath_init /= 2**self.n_b #Normalize
 
 			self.rho_test = []
 			for i in range(self.N_s):
+				'''Reference states (N_s + 1 states)'''
 				rhoi = np.zeros((self.N_s, self.N_s))
 				rhoi[i,i] = 1
 				self.rho_test.append(rhoi)
@@ -157,24 +146,19 @@ class QuManager():
 			if self.return_uni:
 				return u
 			
-			if self.n ==0:
+			if self.n_b ==0:
 				#No bath
-				N_s = self.H0.shape[0]
-				tgt = np.matrix(self.psi1)
-				result = np.absolute(np.trace(tgt.getH() @ u) / N_s) ** 2
+				result = np.absolute(np.trace(self.psi1.conjugate().transpose() @ u) / self.N_s) ** 2
 			else:
 				#The fidelity follows that defined by Arenz et al.
-				n_bath = self.n + self.n2 #total number of bath qubits
-				N_b = 2**n_bath #size of bath space
-				N_s = int(self.H0.shape[0]/N_b) #size of system space
-				u_f = np.kron(self.psi1, np.identity(N_b))
+				u_f = np.kron(self.psi1, np.identity(self.N_b))
 				Q = np.matmul(u_f.conjugate().transpose(), u )
 				#Implementation 1
 				# Q = Q[ :N, :N] + Q[N: , N: ] #partial trace
 				#Implementation 2: https://www.peijun.me/reduced-density-matrix-and-partial-trace.html
-				Q_tensor = Q.reshape([N_s, N_b, N_s, N_b])
+				Q_tensor = Q.reshape([self.N_s, self.N_b, self.N_s, self.N_b])
 				Q_b = np.trace(Q_tensor, axis1=0, axis2=2) #partial trace over sys
-				result = np.absolute(np.trace(la.sqrtm(Q_b.conjugate().transpose() @ Q_b)) / (N_s*N_b)) ** 2
+				result = np.absolute(np.trace(la.sqrtm(Q_b.conjugate().transpose() @ Q_b)) / (self.N_s*self.N_b)) ** 2
 				if self.fid_fix =='barrier':
 					result = result - 100000000.0 * int(np.any([t<0 for t in protocol]))
 
@@ -201,8 +185,7 @@ class QuManager():
 				else:
 					raise Exception("Dynamics type not supported")
 				rhot = self.simulator.getRho()
-				Nb = 2**(self.n+self.n2)
-				rho_ts = self.ptrace(rhot, Nb, out = 'b')
+				rho_ts = self.ptrace(rhot, self.N_b, out = 'b')
 				result += np.trace(rho_ts @ self.rho_target[j]).real /self.rho_test_purity[j]
 			result /= len(self.rho_test)
 
@@ -236,8 +219,7 @@ class QuManager():
 				simulator.setH(self.H1)
 				simulator.simulate_closed_rho(protocol[i])
 		rhot = simulator.state
-		Nb = 2**(self.n+self.n2)
-		rho_s = self.ptrace(rhot, Nb, out = 'b')
+		rho_s = self.ptrace(rhot, self.N_b, out = 'b')
 		#Changed to ptrace fidelity and overlap with the target state for fidelity check. NOT USED FOR Optimization!!!
 		return np.trace(rho_s @ self.psi1).real #the target is a pure state so we can do this
 
@@ -250,7 +232,7 @@ class QuManager():
 		simulator.simulate_closed(T)
 		u = simulator.getRho()
 		#The fidelity follows that defined by Arenz et al.
-		N = 2**self.n #size of bath space
+		N = 2**self.n1 #size of bath space
 		u_f = np.kron(self.psi1, np.identity(N))
 		# print(self.psi1.shape, u.shape)
 		Q = u_f.conjugate().transpose() @ u 

@@ -52,7 +52,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	if if_no_bath or (test_case == 'NoBath'):
 		dyna_type = 'cs'
 		fid_type = 'au'
-		n=0
+		n_b=0
 		A = np.ones(1)
 
 		H0 = -0.5*sigma_z + 2.0*sigma_x
@@ -77,11 +77,11 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	elif test_case == 'cs_st':
 		dyna_type = 'cs'
 		fid_type = 'st'
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 		elif args.cs_coup == 'uneq':
-			A = np.random.normal(1.0, 0.25, n)
+			A = np.random.normal(1.0, 0.25, n_b)
 
 		if args.impl == 'numpy':
 			psi0 = np.kron(np.array([-1. / 2 - np.sqrt(5.) / 2, 1]), np.array([.5, .5])) #the bath qubit initial state, can be modified
@@ -94,19 +94,19 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 
 			#The coupling Hamiltonian
 			HAB = A*(np.kron(sigma_x, sigma_x) + np.kron(sigma_y, sigma_y) + np.kron(sigma_z, sigma_z))
-			HA = np.kron(-sigma_z, np.identity(2*n)) #The system Hamiltonian
+			HA = np.kron(-sigma_z, np.identity(2*n_b)) #The system Hamiltonian
 			H00 = HA + HAB
-			H0 = (H00 + (2.0) * np.kron(-sigma_x, np.identity(2*n))) / 2.
-			H1 = (H00 - (2.0) * np.kron(-sigma_x, np.identity(2*n))) / 2.
+			H0 = (H00 + (2.0) * np.kron(-sigma_x, np.identity(2*n_b))) / 2.
+			H1 = (H00 - (2.0) * np.kron(-sigma_x, np.identity(2*n_b))) / 2.
 		
 		elif args.impl == 'quspin':
 
 			# compute Hilbert space basis
-			basis = spin_basis_1d(L = n+1)
+			basis = spin_basis_1d(L = n_b+1)
 			
 			# compute site-coupling lists
 			z_term = [[-0.5, 0]]
-			couple_term = [[A[i], 0, i+1] for i in range(n)]
+			couple_term = [[A[i], 0, i+1] for i in range(n_b)]
 			x_term = [[1.0, 0]]
 
 			#operator string lists
@@ -140,19 +140,19 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	elif test_case == 'cs_au':
 		dyna_type = 'cs'
 		fid_type = 'au'
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 		elif args.cs_coup == 'uneq':
-			A = np.random.uniform(1.0, 2.0, n) #According to Arenz
-			# A = np.random.normal(1.0, 0.25, n)
+			A = np.random.uniform(1.0, 2.0, n_b) #According to Arenz
+			# A = np.random.normal(1.0, 0.25, n_b)
 		
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
 		z_term = [[-0.5, 0]]
-		couple_term = [[A[i], 0, i+1] for i in range(n)]
+		couple_term = [[A[i], 0, i+1] for i in range(n_b)]
 		x_term = [[1.0, 0]]
 
 		#operator string lists
@@ -176,23 +176,23 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		'''
 		dyna_type = 'cs'
 		fid_type = 'au'
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 		elif args.cs_coup == 'uneq':
-			A = np.random.uniform(1.0, 2.0, n) #According to Arenz
-			# A = np.random.normal(1.0, 0.25, n)
+			A = np.random.uniform(1.0, 2.0, n_b) #According to Arenz
+			# A = np.random.normal(1.0, 0.25, n_b)
 		
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
 		z_term = [[-0.5, 0]]
-		couple_term = [[A[i], 0, i+1] for i in range(n)]
+		couple_term = [[A[i], 0, i+1] for i in range(n_b)]
 		x_term = [[1.0, 0]]
 
 		g_bb = 0.001
-		bb_term = [[g_bb, i+1, j+1]  for i in range(n) for j in range (i+1,n)]
+		bb_term = [[g_bb, i+1, j+1]  for i in range(n_b) for j in range (i+1,n_b)]
 
 		#operator string lists
 		static_d = [['z', z_term], ['zz', couple_term], 
@@ -214,18 +214,18 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		dyna_type = 'cs'
 		fid_type = 'au'
 
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 		elif args.cs_coup == 'uneq':
-			A = np.random.normal(1.0, 0.25, n)
+			A = np.random.normal(1.0, 0.25, n_b)
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
 		z_term = [[-0.5, 0]]
-		couple_term = [[A[i], 0, i+1] for i in range(n)]
+		couple_term = [[A[i], 0, i+1] for i in range(n_b)]
 		x_term = [[1.0, 0]]
 
 		#operator string lists
@@ -246,18 +246,18 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	elif test_case == 'dipole':
 		dyna_type = 'cs'
 		fid_type = 'au'
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 		elif args.cs_coup == 'uneq':
-			A = np.random.normal(1.0, 0.25, n)
+			A = np.random.normal(1.0, 0.25, n_b)
 		
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
 		z_term = [[-0.5, 0]]
-		couple_term = [[A[i], 0, i+1] for i in range(n)]
+		couple_term = [[A[i], 0, i+1] for i in range(n_b)]
 		x_term = [[1.0, 0]]
 
 		#operator string lists
@@ -278,24 +278,24 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	elif test_case == 'XmonTLS':
 		dyna_type = 'cs'
 		fid_type = 'au'
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if not couplings:
 			if args.cs_coup == 'eq':
-				A = np.ones(n)
+				A = np.ones(n_b)
 				A /= 200
 			elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
-				A = np.random.uniform(0.5, 5, n)
+				A = np.random.uniform(0.5, 5, n_b)
 				A /= 1000 #Scale to desired strength
 		
-		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
+		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
-		z_term = [[-Delta[i]/2, i] for i in range(n+1)]
-		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
+		z_term = [[-Delta[i]/2, i] for i in range(n_b+1)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
 		x_term = [[1.0, 0]]
 
 		#operator string lists
@@ -320,27 +320,27 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		'''
 		dyna_type = 'cs'
 		fid_type = 'au'
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 			A /= 200
 		elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
-			A = np.random.uniform(0.5, 5, n)
+			A = np.random.uniform(0.5, 5, n_b)
 			A /= 1000 #Scale to desired strength
 		
-		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
+		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
-		z_term = [[-Delta[i]/2, i] for i in range(n+1)]
-		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
+		z_term = [[-Delta[i]/2, i] for i in range(n_b+1)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
 		x_term = [[1.0, 0]]
 
 		g_bb = 0.001
-		bb_term = [[g_bb, i+1, j+1]  for i in range(n) for j in range (i+1,n)]
+		bb_term = [[g_bb, i+1, j+1]  for i in range(n_b) for j in range (i+1,n_b)]
 		#operator string lists
 		static_d = [['z', z_term], 
 					['-+', couple_term], ['+-', couple_term],
@@ -361,22 +361,22 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	elif test_case =='TLSsec_bath':
 		'''Exploiting Non-Markovianity for Quantum Control'''
 		n_system = 1
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 		elif args.cs_coup == 'uneq':
-			A = np.random.uniform(0.1, 1, n)
+			A = np.random.uniform(0.1, 1, n_b)
 		A *= 0.04 #40MHz
 
-		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
+		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 		Delta *= 8.0 #8GHz
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		# compute site-coupling lists
-		z_term = [[-Delta[i]/2, i] for i in range(n+1)]
-		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
+		z_term = [[-Delta[i]/2, i] for i in range(n_b+1)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
 		x_term = [[8.0, 0]]
 		#operator string lists
 		static_d = [['z', z_term], 
@@ -391,9 +391,9 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 
 		decoherence_type = args.deco_type
-		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n 
+		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n_b 
 		L = []
-		for i in range(n+n_system):
+		for i in range(n_b+n_system):
 			L_term = [[decoherence_type, [[gamma[i], i]] ]]
 			H_temp = hamiltonian(L_term, [], basis=basis, dtype=np.complex128, check_herm=False)
 			L.append(np.array(H_temp.toarray()))
@@ -409,22 +409,22 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		'''Exploiting Non-Markovianity for Quantum Control
 		lowered strength, same as other test cases'''
 		n_system = 1
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 			A /= 200
 		elif args.cs_coup == 'uneq':
-			A = np.random.uniform(0.5, 5, n)
+			A = np.random.uniform(0.5, 5, n_b)
 			A /= 1000 #Scale to desired strength
 
-		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
+		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		# compute site-coupling lists
-		z_term = [[-Delta[i]/2, i] for i in range(n+1)]
-		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
+		z_term = [[-Delta[i]/2, i] for i in range(n_b+1)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
 		x_term = [[1.0, 0]]
 		#operator string lists
 		static_d = [['z', z_term], 
@@ -439,10 +439,10 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 
 		decoherence_type = args.deco_type
-		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n
+		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n_b
 		gamma = [gamma_i/np.sqrt(8) for gamma_i in gamma] #Strength Scaling
 		L = []
-		for i in range(n+n_system):
+		for i in range(n_b+n_system):
 			L_term = [[decoherence_type, [[gamma[i], i]] ]]
 			H_temp = hamiltonian(L_term, [], basis=basis, dtype=np.complex128, check_herm=False)
 			L.append(np.array(H_temp.toarray()))
@@ -458,22 +458,22 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		'''Exploiting Non-Markovianity for Quantum Control
 		same ansatz, parameter strength is ours'''
 		n_system = 1
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 			A /= 200
 		elif args.cs_coup == 'uneq':
-			A = np.random.uniform(0.5, 5, n)
+			A = np.random.uniform(0.5, 5, n_b)
 			A /= 1000 #Scale to desired strength
 
-		Delta = np.linspace(1.0,1.0+0.1*(n-1), num=n) #TLS frequencies
+		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		# compute site-coupling lists
-		z_term = [[-Delta[i]/2, i] for i in range(n+1)]
-		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
+		z_term = [[-Delta[i]/2, i] for i in range(n_b+1)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
 		ctr_term = [[1.0, 0]]
 		#operator string lists
 		static_d = [['z', z_term], 
@@ -488,10 +488,10 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 
 		decoherence_type = args.deco_type
-		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n
+		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n_b
 		gamma = [gamma_i/np.sqrt(8) for gamma_i in gamma] 
 		L = []
-		for i in range(n+n_system):
+		for i in range(n_b+n_system):
 			L_term = [[decoherence_type, [[gamma[i], i]] ]]
 			H_temp = hamiltonian(L_term, [], basis=basis, dtype=np.complex128, check_herm=False)
 			L.append(np.array(H_temp.toarray()))
@@ -508,24 +508,24 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		exact match of their parameters but without Lindblad'''
 		dyna_type = 'cs'
 		fid_type = 'au'
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if not couplings:
 			if args.cs_coup == 'eq':
-				A = np.ones(n)
+				A = np.ones(n_b)
 				A /= 200
 			elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
-				A = np.random.uniform(0.5, 5, n)
+				A = np.random.uniform(0.5, 5, n_b)
 				A /= 1000 #Scale to desired strength
 		A *= 0.06 #60MHz
 		
 		Delta = [5.0, 5.0-0.55, 5.0-0.55-0.45] #Frequency list, 5GHz
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
-		z_term = [[-Delta[i]/2, i] for i in range(n+1)]
-		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
+		z_term = [[-Delta[i]/2, i] for i in range(n_b+1)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
 		ctr_term = [[5.0, 0]]
 
 		#operator string lists
@@ -547,24 +547,24 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		'''Exploiting Non-Markovianity for Quantum Control
 		exact match of their parameters'''
 		n_system = 1
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if not couplings:
 			if args.cs_coup == 'eq':
-				A = np.ones(n)
+				A = np.ones(n_b)
 				A /= 200
 			elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
-				A = np.random.uniform(0.5, 5, n)
+				A = np.random.uniform(0.5, 5, n_b)
 				A /= 1000 #Scale to desired strength
 		A *= 0.06 #60MHz
 		
 		Delta = [5.0, 5.0-0.55, 5.0-0.55-0.45] #Frequency list, 5GHz
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
-		z_term = [[-Delta[i]/2, i] for i in range(n+1)]
-		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
+		z_term = [[-Delta[i]/2, i] for i in range(n_b+1)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
 		ctr_term = [[5.0, 0]]
 
 		#operator string lists
@@ -582,9 +582,9 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		H1 = H_d.toarray() - 2*H_c.toarray()
 
 		decoherence_type = args.deco_type
-		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n
+		gamma = [np.sqrt(1/args.T1_sys)] + [np.sqrt(1/args.T1_TLS)]*n_b
 		L = []
-		for i in range(n+n_system):
+		for i in range(n_b+n_system):
 			L_term = [[decoherence_type, [[gamma[i], i]] ]]
 			H_temp = hamiltonian(L_term, [], basis=basis, dtype=np.complex128, check_herm=False)
 			L.append(np.array(H_temp.toarray()))
@@ -600,7 +600,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		'''Derived from the testcase Lloyd_var1'''
 		n1 = args.env_dim #number of bath qubits coupled to qubit 1
 		n2 = args.env_dim2 #number of bath qubits coupled to qubit 2
-		n=n1+n2
+		n_b=n1+n2
 		n_system = 2
 		if args.cs_coup == 'eq':
 			A = np.ones(n1+n2)
@@ -609,7 +609,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
 		
-		# E = np.linspace(1.0,1.0+0.1*(n-1), num=2) #TODO:qubit frequency
+		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 1.0 #qubit-qubit coupling constant
 
 		# compute Hilbert space basis
@@ -639,11 +639,11 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		H1 = H_d.toarray() + H_s.toarray() - H_c.toarray()
 		
 		decoherence_type = args.deco_type
-		gamma = [np.sqrt(1/args.T1_sys)]*n_system + [np.sqrt(1/args.T1_TLS)]*n 
+		gamma = [np.sqrt(1/args.T1_sys)]*n_system + [np.sqrt(1/args.T1_TLS)]*n_b 
 		gamma = [gamma_i/np.sqrt(8) for gamma_i in gamma] #Strength Scaling
 
 		L = []
-		for i in range(n+n_system):
+		for i in range(n_b+n_system):
 			L_term = [[decoherence_type, [[gamma[i], i]] ]]
 			H_temp = hamiltonian(L_term, [], basis=basis, dtype=np.complex128, check_herm=False)
 			L.append(np.array(H_temp.toarray()))
@@ -658,20 +658,20 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	elif test_case == 'Xmon_nb':
 		dyna_type = 'cs'
 		fid_type = 'au'
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 			A /= 200
 		elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
-			A = np.random.uniform(0.5, 5, n)
+			A = np.random.uniform(0.5, 5, n_b)
 			A /= 1000 #Scale to desired strength
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
 		z_term = [[-0.5, 0]]
-		couple_term = [[A[i]/2, 0, i+1] for i in range(n)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
 		x_term = [[1.0, 0]]
 
 		#operator string lists
@@ -692,20 +692,20 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 	elif test_case == 'dipole_VarStr':
 		dyna_type = 'cs'
 		fid_type = 'au'
-		n = args.env_dim #number of bath qubits
+		n_b = args.env_dim #number of bath qubits
 		if args.cs_coup == 'eq':
-			A = np.ones(n)
+			A = np.ones(n_b)
 		elif args.cs_coup == 'uneq':
-			A = np.random.normal(1.0, 0.25, n)
+			A = np.random.normal(1.0, 0.25, n_b)
 		
 		A /= 10**(args.cp_str) #sacle to desired strength, power of 10
 
 		# compute Hilbert space basis
-		basis = spin_basis_1d(L = n+1)
+		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
 		z_term = [[-0.5, 0]]
-		couple_term = [[A[i], 0, i+1] for i in range(n)]
+		couple_term = [[A[i], 0, i+1] for i in range(n_b)]
 		x_term = [[1.0, 0]]
 
 		#operator string lists
@@ -736,7 +736,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
 		
-		# E = np.linspace(1.0,1.0+0.1*(n-1), num=2) #TODO:qubit frequency
+		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 2.5/1000 #qubit-qubit coupling constant
 
 		# compute Hilbert space basis
@@ -764,7 +764,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		H0 = H_d.toarray() + H_ca.toarray()
 		H1 = H_d.toarray() + H_cb.toarray()
 
-		n=n1+n2
+		n_b=n1+n2
 		n_system = 2
 
 	elif test_case == '2qbCPHASE':
@@ -780,7 +780,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
 		
-		# E = np.linspace(1.0,1.0+0.1*(n-1), num=2) #TODO:qubit frequency
+		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 2.5/1000 #qubit-qubit coupling constant		 
 
 		# compute Hilbert space basis
@@ -808,7 +808,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		#QAOA Hamiltonians
 		H0 = H_d.toarray() + H_ca.toarray()
 		H1 = H_d.toarray() + H_cb.toarray()
-		n=n1+n2
+		n_b=n1+n2
 		n_system = 2
 	
 	elif test_case == 'Lloyd_2qb':
@@ -828,10 +828,8 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
 		
-		# E = np.linspace(1.0,1.0+0.1*(n-1), num=2) #TODO:qubit frequency
+		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 1.0 #qubit-qubit coupling constant
-
-		 
 
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n1+n2+2)
@@ -858,7 +856,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		#QAOA Hamiltonians
 		H0 = H_d.toarray() + H_ca.toarray()
 		H1 = H_d.toarray() + H_cb.toarray()
-		n=n1+n2
+		n_b=n1+n2
 
 	elif test_case == 'Lloyd_var1':
 		'''Proved to be universal:
@@ -878,7 +876,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
 		
-		# E = np.linspace(1.0,1.0+0.1*(n-1), num=2) #TODO:qubit frequency
+		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 1.0 #qubit-qubit coupling constant
 
 		# compute Hilbert space basis
@@ -906,7 +904,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		#QAOA Hamiltonians
 		H0 = H_d.toarray() + H_s.toarray() + H_c.toarray()
 		H1 = H_d.toarray() + H_s.toarray() - H_c.toarray()
-		n=n1+n2
+		n_b=n1+n2
 
 	elif test_case == 'Lloyd_3qb':
 		'''Proved to be universal:
@@ -926,14 +924,11 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
 		
-		# E = np.linspace(1.0,1.0+0.1*(n-1), num=2) #TODO:qubit frequency
+		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = [1.1, 1.15] #qubit-qubit coupling constants
-
-		 
 
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n1+n2+n_system)
-
 		
 		# compute site-coupling lists
 		couple_term_1 = [[A[i]/2, 0, i+n_system] for i in range(n1)]
@@ -957,7 +952,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		#QAOA Hamiltonians
 		H0 = H_d.toarray() + H_ca.toarray()
 		H1 = H_d.toarray() + H_cb.toarray()
-		n=n1+n2
+		n_b=n1+n2
 
 	elif test_case == 'XXnYY':
 		dyna_type = 'cs'
@@ -972,7 +967,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
 
-		# E = np.linspace(1.0,1.0+0.1*(n-1), num=2) #TODO:qubit frequency
+		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 2.5/1000 #qubit-qubit coupling constant 
 
 		# compute Hilbert space basis
@@ -1007,7 +1002,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		#QAOA Hamiltonians
 		H0 = H_d.toarray() + H_ca.toarray()
 		H1 = H_d.toarray() + H_cb.toarray()
-		n=n1+n2
+		n_b=n1+n2
 		n_system = 2
 	
 	elif test_case == 'XXYY_X':
@@ -1024,7 +1019,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
 
-		# E = np.linspace(1.0,1.0+0.1*(n-1), num=2) #TODO:qubit frequency
+		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 2.5/1000 #qubit-qubit coupling constant
 
 		 
@@ -1062,7 +1057,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		#QAOA Hamiltonians
 		H0 = H_d.toarray() + H_ca.toarray()
 		H1 = H_d.toarray() + H_cb.toarray()
-		n=n1+n2
+		n_b=n1+n2
 		n_system = 2
 
 	elif test_case == 'XXpm':
@@ -1118,8 +1113,57 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		#QAOA Hamiltonians
 		H0 = H_d.toarray() + H_c.toarray()
 		H1 = H_d.toarray() - H_c.toarray()
-		n=n1+n2
+		n_b=n1+n2
 		n_system = 2
+
+	elif test_case == '1qb1anci':
+		'''Proved to be universal:
+		https://arxiv.org/abs/1812.11075v1
+		On the universality of the quantum approximate optimization algorithm
+		Change to a more practical scenario
+		Now treating the second qubit as ancilla
+		'''
+		dyna_type = 'cs'
+		fid_type = 'au'
+		n1 = args.env_dim #number of bath qubits coupled to the qubit
+		n2 = args.env_dim2 #number of bath qubits coupled to the ancilla
+		n_system = 1
+		n_b=n1+n2+1 #The ancilla is treated as bath when computing the fidelity
+		
+		if args.cs_coup == 'eq':
+			A = np.ones(n1+n2)
+			A /= 200
+		elif args.cs_coup == 'uneq':
+			A = np.random.uniform(0.5, 5, n1+n2)
+			A /= 1000 #Scale to desired strength
+		
+		g = 1.0 #qubit-qubit coupling constant
+
+		# compute Hilbert space basis
+		basis = spin_basis_1d(L = n_b+n_system)
+		
+		# compute site-coupling lists
+		couple_term_1 = [[A[i]/2, 0, i+2] for i in range(n1)]
+		couple_term_2 = [[A[i+n1]/2, 1, i+2+n1] for i in range(n2)]
+		x_term = [[1.0, i] for i in range(2)]
+		entangle_term = [[- g/2, 0, 1]]
+		z_term = [[1.0, 0], [1.05, 1]]
+
+		#operator string lists
+		static_d = [['-+', couple_term_1], ['+-', couple_term_1], 
+					['-+', couple_term_2], ['+-', couple_term_2]]
+		control = [['x', x_term]]
+		static_sys = [['zz', entangle_term], ['z', z_term]]
+
+		#The drifting Hamiltonian
+		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
+		#The control Hamiltonians
+		H_c = hamiltonian(control, [], basis=basis, dtype=np.complex128)
+		H_s = hamiltonian(static_sys, [], basis=basis, dtype=np.complex128)
+
+		#QAOA Hamiltonians
+		H0 = H_d.toarray() + H_s.toarray() + H_c.toarray()
+		H1 = H_d.toarray() + H_s.toarray() - H_c.toarray()
 
 	elif test_case == 'result_analysis':
 		'''Use this with caution!!!'''
@@ -1131,8 +1175,6 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		
 		A /= args.cs_coup_scale #Make sure it's not scaled twice
 		g = 2.5/1000 #qubit-qubit coupling constant
-
-		 
 
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n1+n2+n_system)
@@ -1166,7 +1208,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		#QAOA Hamiltonians
 		H0 = H_d.toarray() + H_ca.toarray()
 		H1 = H_d.toarray() + H_cb.toarray()
-		n=n1+n2
+		n_b=n1+n2
 
 	psi1 =  target_uni(args.au_uni)
 	psi1_input = psi1.astype(complex)
@@ -1174,14 +1216,15 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		'''Append identity if dimension doesn't match'''
 		Id = np.identity(2**n_system // len(psi1_input))
 		psi1_input = np.kron(psi1_input, Id)
+		
 	A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
-	psi0_input = np.identity(2**(n+n_system)) #Start from identity
+	psi0_input = np.identity(2**(n_b+n_system)) #Start from identity
 	
 	if test_case in {'TLSsec_bath', 'TLSsec_bath_2qb', 'TLSsec_bath_lowStr', 'Koch_1qb', 'Koch_paper_1qb'}:
 		#note that psi0 here is meaningless
 		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args,
-						couplings = A, lind_L = L, n_s = n_system)
+						couplings = A, lind_L = L, n_s = n_system, n_b = n_b)
 	else:
-		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args, couplings = A)
+		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args, n_s = n_system, n_b = n_b, couplings = A)
 	
 	return quma

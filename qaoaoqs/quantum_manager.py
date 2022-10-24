@@ -232,7 +232,7 @@ class QuManager():
 		simulator.simulate_closed(T)
 		u = simulator.getRho()
 		#The fidelity follows that defined by Arenz et al.
-		N = 2**self.n1 #size of bath space
+		N = self.N_b
 		u_f = np.kron(self.psi1, np.identity(N))
 		# print(self.psi1.shape, u.shape)
 		Q = u_f.conjugate().transpose() @ u 

@@ -170,6 +170,45 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 
+	elif test_case == 'Heis_lab':
+		'''
+		Heisenberg coupling in the lab frame (with bath spin energy)
+		'''
+		dyna_type = 'cs'
+		fid_type = 'au'
+		n_b = args.env_dim #number of bath qubits
+		if args.cs_coup == 'eq':
+			A = np.ones(n_b)
+		elif args.cs_coup == 'uneq':
+			A = np.random.uniform(1.0, 2.0, n_b) #According to Arenz
+			# A = np.random.normal(1.0, 0.25, n_b)
+		
+		# compute Hilbert space basis
+		basis = spin_basis_1d(L = n_b+1)
+
+		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
+		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
+
+		# compute site-coupling lists
+		z_term = [[-Delta[i]/2, i] for i in range(n_b+1)]
+		couple_term = [[A[i], 0, i+1] for i in range(n_b)]
+		x_term = [[1.0, 0]]
+
+		#operator string lists
+		static_d = [['z', z_term], ['zz', couple_term], 
+					['xx', couple_term], ['yy', couple_term]]
+		static_c = [['x', x_term]]
+
+		#The drifting Hamiltonian
+		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
+		#The control Hamiltonian
+		H_c = hamiltonian(static_c, [], basis=basis, dtype=np.complex128)
+
+		#QAOA Hamiltonians
+		H0 = H_d.toarray() + 2.0 * H_c.toarray()
+		H1 = H_d.toarray() - 2.0 * H_c.toarray()
+		n_system = 1
+
 	elif test_case == 'Heis_bbzz':
 		'''
 		Isotropic coupling with bath-bath couplings

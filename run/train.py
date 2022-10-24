@@ -69,7 +69,7 @@ def parse_args():
 	qc_arg.add_argument('--qaoa_method', choices=['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'Newton-CG', 'L-BFGS-B', 'TNC', 'COBYLA', 'SLSQP', 'trust-constr',
 												  'dogleg', 'trust-ncg', 'trust-exact', 'trust-krylov'], default='trust-constr', help='optimization method for the scipy optimize')
 	#Physical parameters
-	qc_arg.add_argument('--testcase', choices=['lind', 'cs_au', 'ns_cs', 'ns_lind', 
+	qc_arg.add_argument('--testcase', choices=['lind', 'cs_au', 'ns_cs', 'ns_lind', 'Heis_lab',
 						'dipole', 'XmonTLS', 'Xmon_nb','NoBath','dipole_VarStr', 
 						'2qbiSWAP', '2qbCPHASE', 'XXnYY', 'XXpm', 'XXYY_X', 
 						'Lloyd_2qb', 'Lloyd_3qb', 'Lloyd_var1',

@@ -70,7 +70,7 @@ class Result():
 		qubit_ct = int(np.log2(len(quma.psi1)))
 		target_uni = quma.psi1
 		outputs = []
-		n = quma.n+quma.n2
+		n = quma.n_b
 		if temp == 'zero':
 			bath_init = np.zeros((2**n, 2**n), dtype='complex128')
 			bath_init[0,0] = 1
@@ -222,3 +222,15 @@ class Result():
 		self.data.insert(len(self.data), "log_fid_std", self.data["log_fid"].std())
 		self.data[0,"log_fid"] = self.data["log_fid"].mean()
 		self.data = self.data.head(1)
+
+	def compute_grad(self):
+		'''
+		Compute the gradient of the final protocol
+		'''
+		import numdifftools as nd
+
+		quma = sys_setup.setup(self.params)
+		protocol = self.data['duration'].to_numpy()[0][0]
+		gradient = nd.Gradient(quma.get_reward)(protocol)
+		Hessian = nd.Hessian(quma.get_reward)(protocol)
+		return gradient, Hessian

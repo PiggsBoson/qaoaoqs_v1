@@ -13,7 +13,7 @@ import numpy as np
 #Local scripts
 from qaoaoqs.Dynamics import *
 from qaoaoqs.quantum_manager import *
-from result_analysis.result import *
+from result import *
 from qaoaoqs.tools import *
 
 '''
@@ -23,6 +23,7 @@ This is used to plot the maximum fidelity in each set of simulations against p,n
 def plot_data(data, args):
 	'''Color schemes: https://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=6'''
 	colors = ['#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02']
+	# colors = ['#7570b3','#1b9e77','#e7298a','#d95f02','#66a61e','#e6ab02']
 	#Scheme 1: ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33']
 	ftsz = 16 #Font size
 	plt.rcParams.update({'font.size': ftsz})
@@ -63,7 +64,7 @@ def plot_data(data, args):
 
 			if args.option == 'comparison':
 				i+=1
-				line.set_label('QAOA control')
+				line.set_label('With control')
 				plt.plot(args.x, 'log_fid_no',ls = '-', marker = 'o', data = group, color = colors[i], label = 'No Control') #only log fidelity is used
 
 			elif args.option == 'state_fid':
@@ -291,7 +292,7 @@ def get_datasets(fpath, args = None) -> Result:
 	if args.x != "cp_str":	
 		datasets = datasets[datasets["fid"]==datasets["fid"].max()]
 
-	datasets["cp_str"] = [10**(-int(p)) for p in datasets["cp_str"]]
+	# datasets["cp_str"] = [10**(-int(p)) for p in datasets["cp_str"]]
 
 	if not 'T_tot' in datasets.columns:
 		#Accomondate onlder versions
@@ -353,7 +354,7 @@ def main():
 	parser.add_argument('--filter', choices=['p','n','lind_gamma'],default=None)
 	# parser.add_argument('--comparision', type=bool, default=False)
 	parser.add_argument('--title',type=str, default=None)
-	parser.add_argument('--option',choices=['plot', 'state_fid', 'comparison', 'plot_ab','plot_his','ani_his', 'Bapat_n','Bapat_p', 'GRK'],default='plot')
+	parser.add_argument('--option',choices=['plot', 'state_fid', 'comparison', 'plot_ab','plot_his','ani_his', 'Bapat_n','Bapat_p', 'GRK', 'grad'],default='plot')
 	parser.add_argument('--temp',choices=['zero', 'inf', 'rand'],default='zero')
 	parser.add_argument('--state_samples', type = int, default=100)
 	parser.add_argument('--sanity_check',type=bool, default=False)
@@ -383,6 +384,12 @@ def main():
 		plot_Bapat_n(data, args)
 	elif args.option == 'Bapat_p':
 		plot_Bapat_p(data, args)
+	elif args.option == 'grad':
+		ev1, _ = np.linalg.eig([[1,1],[1,1]])
+		grad,heis = result.compute_grad()
+		print("The gradient is :", grad)
+		ev, _ = np.linalg.eig(heis)
+		print("The eigenvalues of the Hessian is", ev)
 	else:
 		plot_data(data, args)
 

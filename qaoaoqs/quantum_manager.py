@@ -53,6 +53,13 @@ class QuManager():
 		self.n_b = kwargs.get('n_b')
 		self.N_s = 2**self.n_s
 		self.N_b = 2**self.n_b
+
+		#For analysis of controllability
+		self.H_B = kwargs.get('H_B', None)
+		self.H_int = kwargs.get('H_int', None)
+		self.H_S0 = kwargs.get('H_S0', None)
+		self.H_S1 = kwargs.get('H_S1', None)
+
 		if args: 
 			self.impl = args.impl
 
@@ -266,6 +273,56 @@ class QuManager():
 			result = np.trace(M_tensor, axis1=0, axis2=2)
 		return result
 	
+	def time_avg_intHam(self, protocol, tstep = 100):
+		'''
+		Compute the time average of the interaction Hamiltonian
+		2208.14193
+		100 steps is enough for the result to converge (compared to that of 1000 and 2000)
+		'''
+		dt = self.T_tot/tstep
+		if self.renormal: 
+			#checked: pass by value here. Will not afffect the value of the protocol
+			protocol /= np.sum(protocol)
+			protocol *= self.T_tot
+		simulator_sys = Dyna(self.psi0 , self.H_S0, H_0 = self.H_S0, H_1 = self.H_S1)
+		if not (self.H_B is None):
+			simulator_bath = Dyna(self.psi0 , self.H_B)
+		protocol_idx = 0
+		cur_bang = protocol[protocol_idx]
+		G_avg = np.zeros((self.N_s*self.N_b,self.N_s*self.N_b), dtype = np.complex128)
+
+		for t_idx in range(tstep):
+			if cur_bang>=dt:
+				simulator_sys.simulate_closed(dt)
+				cur_bang-=dt
+			else:
+				interval_time_left = dt
+				while interval_time_left>1e-9:
+					if interval_time_left>cur_bang:
+						interval_time_left-=cur_bang
+						simulator_sys.simulate_closed(cur_bang)
+						simulator_sys.switch()
+						if protocol_idx<len(protocol)-1:
+							protocol_idx+=1
+							cur_bang = protocol[protocol_idx]
+					else:
+						simulator_sys.simulate_closed(interval_time_left)
+						cur_bang-=interval_time_left
+						interval_time_left=0
+			
+			U_S = simulator_sys.getRho()
+			if not (self.H_B is None):
+				simulator_bath.simulate_closed(dt)
+				U_B = simulator_bath.getRho()
+				U_SB = U_S @ U_B
+			else:
+				U_SB = U_S
+
+			G_avg += U_SB.conj().T @ self.H_int @ U_SB
+		G_avg /=tstep
+		return np.linalg.norm(G_avg, ord = 'fro')
+
+
 	# def get_reward_ns1_m(self, protocol, ns):
 	# 	"""Get the fidelity of the type-given protocol in the hamiltonian noise setting I
 

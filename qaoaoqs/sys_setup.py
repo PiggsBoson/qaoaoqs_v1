@@ -39,8 +39,10 @@ def target_uni(uni_name):
 		x = x / la.norm(x) #Normalize
 		return x[0] * np.identity(2) + 1.0j * (x[1] * sigma_x + x[2] * sigma_y + x[3] * sigma_z) #The target unitary W on the system.
 
-def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
-	'''Return the quantum manager corresponding the test case'''
+def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, interaction_pic = False):
+	'''Return the quantum manager corresponding the test case
+	
+	'''
 	if couplings:
 		A = np.array(couplings)
 	if alt_testcase:
@@ -169,6 +171,16 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		H0 = H_d.toarray() + 2.0 * H_c.toarray()
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
+		if interaction_pic:
+			static_Sd = [['z', z_term]]
+			static_int = [['zz', couple_term], 
+					['xx', couple_term], ['yy', couple_term]]
+			H_Sd = hamiltonian(static_Sd, [], basis=basis, dtype=np.complex128)
+
+			H_B = None
+			H_int = hamiltonian(static_int, [], basis=basis, dtype=np.complex128).toarray()
+			H_S0 =  H_Sd.toarray() + 2.0 * H_c.toarray()
+			H_S1 = H_Sd.toarray() - 2.0 * H_c.toarray()
 
 	elif test_case == 'Heis_lab':
 		'''
@@ -351,6 +363,16 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		H0 = H_d.toarray() + 2.0 * H_c.toarray()
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
+		if interaction_pic:
+			static_Sd = [['z', z_term[:1]]]
+			static_Bd = [['z', z_term[1:]]]
+			static_int = [['-+', couple_term], ['+-', couple_term]]
+			H_Sd = hamiltonian(static_Sd, [], basis=basis, dtype=np.complex128)
+
+			H_B = hamiltonian(static_Bd, [], basis=basis, dtype=np.complex128).toarray()
+			H_int = hamiltonian(static_int, [], basis=basis, dtype=np.complex128).toarray()
+			H_S0 =  H_Sd.toarray() + 2.0 * H_c.toarray()
+			H_S1 = H_Sd.toarray() - 2.0 * H_c.toarray()
 
 	elif test_case == 'TLS_bb':
 		'''
@@ -1303,6 +1325,8 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None):
 		#note that psi0 here is meaningless
 		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args,
 						couplings = A, lind_L = L, n_s = n_system, n_b = n_b)
+	elif interaction_pic:
+		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args, n_s = n_system, n_b = n_b, couplings = A, H_B = H_B, H_int = H_int, H_S0 = H_S0, H_S1 = H_S1)
 	else:
 		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args, n_s = n_system, n_b = n_b, couplings = A)
 	

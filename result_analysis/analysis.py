@@ -102,6 +102,12 @@ def plot_data(data, args):
 		plt.ylabel(r'$ F(\theta_p)$', fontsize=ftsz)
 	elif args.value == "T_tot":
 		plt.ylabel(r'$ T$', fontsize=ftsz)
+	elif args.value == "no_bath_fid":
+		plt.ylabel(r'$F_{nom}$', fontsize=ftsz)
+	elif args.value == "no_bath_fid_log":
+		plt.ylabel(r'$-\log_{10}(1-F_{nom})$', fontsize=ftsz)
+	elif args.value == "time_avg_intHam":
+		plt.ylabel(r'$\langle G \rangle$', fontsize=ftsz)
 	else:
 		plt.ylabel(args.value, fontsize=ftsz)
 
@@ -279,7 +285,8 @@ def get_datasets(fpath, args = None) -> Result:
  
 			for param in params:
 				if param =='couplings':
-					experiment_data.insert(len(experiment_data.columns), param, pd.Series(params[param]))
+					experiment_data.insert(len(experiment_data.columns), param, None)
+					experiment_data.at[0,'couplings'] = params[param]
 				else:
 					experiment_data.insert(len(experiment_data.columns), param, params[param])
 			datasets.append(experiment_data)
@@ -291,8 +298,8 @@ def get_datasets(fpath, args = None) -> Result:
 	
 	if args.x != "cp_str":	
 		datasets = datasets[datasets["fid"]==datasets["fid"].max()]
-
-	# datasets["cp_str"] = [10**(-int(p)) for p in datasets["cp_str"]]
+	else:
+		datasets["cp_str"] = [10**(-int(p)) for p in datasets["cp_str"]]
 
 	if not 'T_tot' in datasets.columns:
 		#Accomondate onlder versions
@@ -312,7 +319,7 @@ def get_datasets(fpath, args = None) -> Result:
 	else:
 		result.transmon_time(args.Ham_str)
 
-	if args!= None:
+	if args:
 		if args.sanity_check:
 			#For uneq case, the coupling constants are not kept track of, so can't do this check.   TODO: update the record-keeping later
 			assert np.isclose(datasets["fid"].to_numpy()[0], result.compute_fid(), atol = 5e-3),\
@@ -323,6 +330,10 @@ def get_datasets(fpath, args = None) -> Result:
 			result.no_bath()
 		elif args.value == 'HA_frac':
 			result.HA_fraction()
+		elif args.value == 'time_avg_intHam':
+			result.time_avg_intHam()
+
+
 		#the fidelity without control for comparision
 		if args.option == 'comparison':
 			result.no_opt()
@@ -347,7 +358,7 @@ def main():
 	parser.add_argument('--legend_preset', default= None)
 	parser.add_argument('--x', default='T_tot')
 	parser.add_argument('--value', 
-						choices=['fid','log_fid','T_tot','iter', 'no_bath_fid','no_bath_fid_log', 'HA_frac'],
+						choices=['fid','log_fid','T_tot','iter', 'no_bath_fid','no_bath_fid_log', 'HA_frac', 'time_avg_intHam'],
 						default='log_fid')
 	parser.add_argument('--group_by',default='p')
 	parser.add_argument('--group_by_2nd',default=None)

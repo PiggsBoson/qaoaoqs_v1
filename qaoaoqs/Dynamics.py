@@ -18,7 +18,7 @@ from scipy.special import comb
 
 class Dyna():
 
-	def __init__(self, init_state, H, N = 2, L =None, impl = 'numpy', t_steps = 100):
+	def __init__(self, init_state, H, N = 2, L =None, impl = 'numpy', t_steps = 100, **kwargs):
 		"""system parameters
 
 		Arguments:
@@ -35,12 +35,17 @@ class Dyna():
 		self.impl = impl
 		self.imag_unit = np.complex64(1.0j)
 		self.t_steps = t_steps
+
+		#Alternative implementation
+		self.H_0 = kwargs.get('H_0', None)
+		self.H_1 = kwargs.get('H_1', None)
+		self.cur_Ham = 0
 		if impl =='vec':
 			self.ori_shape = init_state.shape
 			self.state = init_state.reshape((-1, 1), order='F')#vectorize
 			self.Id = np.identity(self.N) #identity
 			self.H_sup = -1* self.imag_unit *(np.kron(H, self.Id) -np.kron(self.Id, H))
-			self.G = 0
+			self.G = 0 #Superoperator
 			for Li in L:
 				self.G += np.kron(Li.conj(), Li) - 0.5* np.kron(self.Id, (Li.conj().T @ Li)) - 0.5 * np.kron((Li.T @ Li.conj()), self.Id)
 		else:
@@ -53,6 +58,16 @@ class Dyna():
 			self.H_sup = - self.imag_unit *(np.kron(H, self.Id) -np.kron(self.Id, H))
 		else:
 			self.H = H
+	
+	def switch(self):
+		if self.H_0 is None or self.H_1 is None:
+			raise RuntimeError("Don't call this unless H_0 and H_1 are passed!")
+		if self.cur_Ham == 0:
+			self.setH(self.H_1)
+			self.cur_Ham = 1
+		else:
+			self.setH(self.H_0)
+			self.cur_Ham = 0
 
 	def set_state(self, state):
 		if self.impl == 'vec':

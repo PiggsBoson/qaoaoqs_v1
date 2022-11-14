@@ -150,7 +150,9 @@ class Result():
 		self.data.insert(len(self.data.columns), 'TLS_T', self.data["T_tot"] / (str *2*np.pi))
 
 	def no_bath(self):
-		'''Checking the implemented unitary without bath using a protocol optimized in the presence of bath.'''
+		'''Checking the implemented unitary without bath using a protocol optimized in the presence of bath.
+		This is called nominal fidelity in 2208.14193
+		'''
 		quma = sys_setup.setup(self.params, if_no_bath = True)
 		quma.reset(n=0)
 		result  = quma.get_reward(self.data['duration'].to_numpy()[0][0])
@@ -234,3 +236,15 @@ class Result():
 		gradient = nd.Gradient(quma.get_reward)(protocol)
 		Hessian = nd.Hessian(quma.get_reward)(protocol)
 		return gradient, Hessian
+
+	def time_avg_intHam(self):
+		'''
+		Compute the time average of the interaction Hamiltonian
+		2208.14193
+		'''
+		couplings = self.data.get('couplings', None)
+		if couplings is None:
+			quma = sys_setup.setup(self.params, couplings = None, interaction_pic=True)
+		else:
+			quma = sys_setup.setup(self.params, couplings = couplings.to_numpy()[0], interaction_pic=True)
+		self.data.insert(len(self.data), "time_avg_intHam", quma.time_avg_intHam(self.data['duration'].to_numpy()[0][0]))

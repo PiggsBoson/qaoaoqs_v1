@@ -149,6 +149,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 			A = np.random.uniform(1.0, 2.0, n_b) #According to Arenz
 			# A = np.random.normal(1.0, 0.25, n_b)
 		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n_b+1)
 		
@@ -195,6 +196,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 			A = np.random.uniform(1.0, 2.0, n_b) #According to Arenz
 			# A = np.random.normal(1.0, 0.25, n_b)
 		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n_b+1)
 
@@ -234,6 +236,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 			A = np.random.uniform(1.0, 2.0, n_b) #According to Arenz
 			# A = np.random.normal(1.0, 0.25, n_b)
 		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n_b+1)
 		
@@ -270,7 +273,8 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 			A = np.ones(n_b)
 		elif args.cs_coup == 'uneq':
 			A = np.random.normal(1.0, 0.25, n_b)
-
+		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n_b+1)
 		
@@ -302,7 +306,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 			A = np.ones(n_b)
 		elif args.cs_coup == 'uneq':
 			A = np.random.normal(1.0, 0.25, n_b)
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n_b+1)
 		
@@ -337,7 +341,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 			elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
 				A = np.random.uniform(0.5, 5, n_b)
 				A /= 1000 #Scale to desired strength
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 
@@ -388,7 +392,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
 			A = np.random.uniform(0.5, 5, n_b)
 			A /= 1000 #Scale to desired strength
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 
@@ -428,7 +432,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.1, 1, n_b)
 		A *= 0.04 #40MHz
-
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 		Delta *= 8.0 #8GHz
@@ -477,7 +481,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n_b)
 			A /= 1000 #Scale to desired strength
-
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 
@@ -526,7 +530,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n_b)
 			A /= 1000 #Scale to desired strength
-
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 
@@ -578,7 +582,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 				A = np.random.uniform(0.5, 5, n_b)
 				A /= 1000 #Scale to desired strength
 		A *= 0.06 #60MHz
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		Delta = [5.0, 5.0-0.55, 5.0-0.55-0.45] #Frequency list, 5GHz
 
 		# compute Hilbert space basis
@@ -617,7 +621,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 				A = np.random.uniform(0.5, 5, n_b)
 				A /= 1000 #Scale to desired strength
 		A *= 0.06 #60MHz
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		Delta = [5.0, 5.0-0.55, 5.0-0.55-0.45] #Frequency list, 5GHz
 
 		# compute Hilbert space basis
@@ -669,7 +673,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 1.0 #qubit-qubit coupling constant
 
@@ -729,7 +733,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
 			A = np.random.uniform(0.5, 5, n_b)
 			A /= 1000 #Scale to desired strength
-
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n_b+1)
 		
@@ -836,7 +840,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 2.5/1000 #qubit-qubit coupling constant
 
@@ -880,7 +884,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 2.5/1000 #qubit-qubit coupling constant		 
 
@@ -928,7 +932,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 1.0 #qubit-qubit coupling constant
 
@@ -976,7 +980,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 1.0 #qubit-qubit coupling constant
 
@@ -1024,7 +1028,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
-		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = [1.1, 1.15] #qubit-qubit coupling constants
 
@@ -1067,7 +1071,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
-
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 2.5/1000 #qubit-qubit coupling constant 
 
@@ -1119,11 +1123,9 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
-
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		# E = np.linspace(1.0,1.0+0.1*(n_b-1), num=2) #TODO:qubit frequency
 		g = 2.5/1000 #qubit-qubit coupling constant
-
-		 
 
 		# compute Hilbert space basis
 		basis = spin_basis_1d(L = n1+n2+2)
@@ -1175,6 +1177,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 			A = np.ones(n1+n2)
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.1, 1, n1+n2)
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 
 		# E = [1.0, 1.05] #TODO:qubit frequency
 		g = 1.0 #qubit-qubit coupling constant
@@ -1237,6 +1240,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		elif args.cs_coup == 'uneq':
 			A = np.random.uniform(0.5, 5, n1+n2)
 			A /= 1000 #Scale to desired strength
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 		
 		g = 1.0 #qubit-qubit coupling constant
 
@@ -1318,7 +1322,6 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		Id = np.identity(2**n_system // len(psi1_input))
 		psi1_input = np.kron(psi1_input, Id)
 		
-	A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
 	psi0_input = np.identity(2**(n_b+n_system)) #Start from identity
 	
 	if test_case in {'TLSsec_bath', 'TLSsec_bath_2qb', 'TLSsec_bath_lowStr', 'Koch_1qb', 'Koch_paper_1qb'}:

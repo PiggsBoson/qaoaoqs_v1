@@ -168,8 +168,10 @@ class Result():
 
 	def compute_fid(self):
 		'''recompute fidelity'''
-		# self.params.testcase = 'result_analysis'
-		quma = sys_setup.setup(self.params, couplings = self.data['couplings'].to_numpy()[0])
+		if hasattr(self.params, 'couplings'):
+			quma = sys_setup.setup(self.params, couplings = self.params.couplings)
+		else:
+			quma = sys_setup.setup(self.params)
 		return quma.get_reward(self.data['duration'].to_numpy()[0][0])
 
 	def HA_fraction(self):

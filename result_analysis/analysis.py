@@ -334,14 +334,19 @@ def get_datasets(fpath, args = None) -> Result:
 			result.time_avg_intHam()
 
 
-		#the fidelity without control for comparision
 		if args.option == 'comparison':
+			#the fidelity without control for comparision
 			result.no_opt()
 			# datasets.insert(len(datasets.columns), 'no_opt', no_opt(datasets, params))
 		elif args.option == 'state_fid':
 			result.state_fid(args.temp, args.state_samples)
 		elif args.option == 'GRK':
 			result.GRK_fidelity(args.temp)
+		elif args.option == 'call':
+			method = getattr(result,args.func_n)
+			print(method())
+		elif  args.option == 'display_data':
+			print(result.data.to_string())
 		
 		if args.x == 'cp_str':
 			result.fid_stat()
@@ -365,8 +370,9 @@ def main():
 	parser.add_argument('--filter', choices=['p','n','lind_gamma'],default=None)
 	# parser.add_argument('--comparision', type=bool, default=False)
 	parser.add_argument('--title',type=str, default=None)
-	parser.add_argument('--option',choices=['plot', 'state_fid', 'comparison', 'plot_ab','plot_his','ani_his', 'Bapat_n','Bapat_p', 'GRK', 'grad'],default='plot')
-	parser.add_argument('--temp',choices=['zero', 'inf', 'rand'],default='zero')
+	parser.add_argument('--option',choices=['plot', 'state_fid', 'comparison', 'plot_ab','plot_his','ani_his', 'Bapat_n','Bapat_p', 'GRK', 'grad', 'call','display_data'],default='plot')
+	parser.add_argument('--func_n',help='function name to call in the result class')
+	parser.add_argument('--temp',choices=['zero', 'inf', 'rand'],default='zero', help='temperature')
 	parser.add_argument('--state_samples', type = int, default=100)
 	parser.add_argument('--sanity_check',type=bool, default=False)
 	parser.add_argument('--ylim',type = int, default=11)
@@ -401,7 +407,7 @@ def main():
 		print("The gradient is :", grad)
 		ev, _ = np.linalg.eig(heis)
 		print("The eigenvalues of the Hessian is", ev)
-	else:
+	elif args.option == 'plot':
 		plot_data(data, args)
 
 

@@ -246,7 +246,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
 
 		# compute site-coupling lists
-		z_term = [[-Delta[0]/2, i]]
+		z_term = [[-Delta[0]/2, 0]]
 		if args.bath_Z_terms:
 			z_term += [[-Delta[i]/2, i] for i in range(1,n_b+n_system)]
 		couple_term = [[A[i], 0, i+1] for i in range(n_b)]
@@ -451,7 +451,7 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		basis = spin_basis_1d(L = n_b+1)
 		
 		# compute site-coupling lists
-		z_term = [[-Delta[0]/2, i]]
+		z_term = [[-Delta[0]/2, 0]]
 		if args.bath_Z_terms:
 			z_term += [[-Delta[i]/2, i] for i in range(1,n_b+n_system)]
 		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]

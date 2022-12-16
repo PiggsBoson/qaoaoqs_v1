@@ -75,7 +75,7 @@ def parse_args():
 						'Lloyd_2qb', 'Lloyd_3qb', 'Lloyd_var1',
 						'TLS_bb', 'Heis_bbzz', 'TLSsec_bath', 'TLSsec_bath_lowStr', 'Koch_1qb',
 						'Koch_paper_1qb_noLind', 'Koch_paper_1qb', 'TLSsec_bath_2qb',
-						'1qb1anci'],
+						'1qb1anci','iso_4Ham','dp_4Ham'],
 						default='cs_au', help='different test case for the problem')
 	qc_arg.add_argument('--env_dim', type=int, default=0,
 						help='number of bath spins in central spin model')
@@ -96,7 +96,7 @@ def parse_args():
 	qc_arg.add_argument('--measure', choices=['quantum', 'noise', 'noise_gate', 'plain', 'noise_avg',
 											  'noise_gate_avg'], default='plain', help='different settings for fidelity measurement')
 	qc_arg.add_argument('--uneq', choices=['normal', 'uniform'],
-						default = 'normal', help='coupling constants if unequal coupling')
+						default = 'normal', help='coupling constants if unequal coupling, no-longer used')
 	qc_arg.add_argument('--cp_str', type=float,
 						default = 1.0, help='coupling strength')
 	qc_arg.add_argument('--b_temp', choices=['zero', 'inf'],
@@ -122,6 +122,8 @@ def parse_args():
 						default=1-1e-9, help='Target fidelity')
 	qc_arg.add_argument('--protocol_renormal', type=bool,
 						default=False, help='Whether renormalizing the protocol in computing the fidelity')
+	qc_arg.add_argument('--bath_Z_terms', type=bool,
+						default=False, help='Whether to have bath Z terms (lab frame)')
 
 	
 
@@ -467,6 +469,10 @@ def train(seed, exp_dir):
 			protocol_b *= each_T
 			protol_init = np.array([item for pair in zip(protocol_a, protocol_b + [0]) 
 							for item in pair])
+		elif args.testcase in {'iso_4Ham','dp_4Ham'}:
+			protol_init = np.random.rand(args.p*4)
+			protol_init /= np.sum(protol_init)
+			protol_init *= args.T_tot
 		else:
 			protol_init = np.random.rand(args.p*2)
 			protol_init /= np.sum(protol_init)

@@ -1,5 +1,5 @@
-#Modified with Zhibo‘s version of dynamics
-#Date Jan. 14 2020
+#Oritinal script: Jiahao Yao
+#Development for open quantum system control: Zhibo Yang
 import numpy as np
 import scipy.linalg as la
 from qaoaoqs.Dynamics import *
@@ -12,21 +12,20 @@ sigma_y = 1.0j * np.array([[0.0, -1.0], [1.0, 0.0]])
 
 class QuManager():
 	# quantum env for the agent
-	def __init__(self, psi0, psi1, H0, H1, dyna_type, fid_type, args = None, couplings = None, H_ns1 = None, H_ns2 = None, **kwargs):
+	def __init__(self, psi0, psi1, H0, H1, dyna_type, fid_type, args = None, couplings = None, **kwargs):
 		"""quantum environment for the RL agents 
 
 		Arguments:
-			psi0 -- initial quantum state
-			psi1 -- target quantum state
-			H0 -- the first hamiltonian gate 
-			H1 -- the second hamiltonian gate 
+			psi0 -- initial quantum state or unitary
+			psi1 -- target quantum state or unitary
+			H0 -- the first hamiltonian 
+			H1 -- the second hamiltonian 
 			dyna_type -- type of dynamics
 				'cs' = Central Spin
 				'lind' = lindblad
 			fid_type -- type of fidelity definition
 				'st'= state transfer, 
 				'au' = arbitary unitary
-			impl -- implementation method
 			
 
 		Keyword Arguments:
@@ -46,6 +45,12 @@ class QuManager():
 
 		self.dyna_type = dyna_type
 		self.fid_type = fid_type
+
+		#Number of swatching Hamiltonians
+		if args.testcase in {'iso_4Ham','dp_4Ham'}:
+			self.switchingHams = 4
+		else:
+			self.switchingHams = 2 #2-Hamiltonian swatching in most of the cases
 		
 		self.couplings = couplings
 
@@ -60,6 +65,10 @@ class QuManager():
 		self.H_S0 = kwargs.get('H_S0', None)
 		self.H_S1 = kwargs.get('H_S1', None)
 
+		#For 4-Hamiltonian switching
+		self.H2 = kwargs.get('H2', None)
+		self.H3 = kwargs.get('H3', None)
+
 		if args: 
 			self.impl = args.impl
 
@@ -72,7 +81,6 @@ class QuManager():
 			if hasattr(args,'T_tot'):
 				self.T_tot = args.T_tot
 			
-			self.testcase = args.testcase
 			self.return_uni = False
 			
 			if hasattr(args,'ode_steps'):
@@ -91,8 +99,6 @@ class QuManager():
 			
 
 			self.delta = kwargs.get('noise_delta',0)
-
-			self.testcase = kwargs.get('testcase')
 
 			self.return_uni = kwargs.get('return_uni', False)
 
@@ -142,14 +148,30 @@ class QuManager():
 		if self.dyna_type == 'cs':
 			u = np.copy(self.psi0)
 			simulator = Dyna(u , self.H0)
-			for i in range(len(protocol)):
-				if i % 2 == 0:
-					simulator.setH(self.H0)
-					simulator.simulate_closed(protocol[i])
-				else:
-					simulator.setH(self.H1)
-					simulator.simulate_closed(protocol[i])
-			u = simulator.getRho()
+			if self.switchingHams==2:
+				for i in range(len(protocol)):
+					if i % 2 == 0:
+						simulator.setH(self.H0)
+						simulator.simulate_closed(protocol[i])
+					else:
+						simulator.setH(self.H1)
+						simulator.simulate_closed(protocol[i])
+				u = simulator.getRho()
+			elif self.switchingHams==4:
+				for i in range(len(protocol)):
+					if i % 4 == 0:
+						simulator.setH(self.H0)
+						simulator.simulate_closed(protocol[i])
+					elif i % 4 == 1:
+						simulator.setH(self.H1)
+						simulator.simulate_closed(protocol[i])
+					elif i % 4 == 2:
+						simulator.setH(self.H2)
+						simulator.simulate_closed(protocol[i])
+					elif i % 4 == 3:
+						simulator.setH(self.H3)
+						simulator.simulate_closed(protocol[i])
+				u = simulator.getRho()
 			if self.return_uni:
 				return u
 			
@@ -278,7 +300,10 @@ class QuManager():
 		Compute the time average of the interaction Hamiltonian
 		2208.14193
 		100 steps is enough for the result to converge (compared to that of 1000 and 2000)
+		Warning: Not updated for 4-Hamiltonian switching yet!!! 
 		'''
+		if self.switchingHams==4:
+			raise ValueError("Not implemented for 4-Hamiltonian switching yet!")
 		dt = self.T_tot/tstep
 		if self.renormal: 
 			#checked: pass by value here. Will not afffect the value of the protocol

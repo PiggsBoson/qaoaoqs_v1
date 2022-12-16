@@ -35,6 +35,10 @@ class Reinforce():
         self.T = args.T_tot
 
         self.testcase = args.testcase
+        if self.testcase in {'iso_4Ham','dp_4Ham'}:
+            self.num_bang_each_p=4
+        else:
+            self.num_bang_each_p=2
 
         self.create_variables()
         var_lists = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
@@ -73,7 +77,7 @@ class Reinforce():
                 protocol_b *= each_T
                 protocol_init = [item for pair in zip(protocol_a, protocol_b + [0]) 
 							for item in pair]
-
+            
             for i in range(self.p):
                 #Modified here for different initial means
                 if self.testcase == 'XXnYY':
@@ -82,16 +86,17 @@ class Reinforce():
                         1, 2], dtype=tf.float32, initializer=tf.constant_initializer(value=[protocol_init[2*i], protocol_init[2*i+1]] ))
                 else:
                     mean = tf.get_variable(name='mean_%d' % i, shape=[
-                        1, 2], dtype=tf.float32, initializer=tf.truncated_normal_initializer(mean=0.5, stddev=0.1))
+                        1, self.num_bang_each_p], dtype=tf.float32, initializer=tf.truncated_normal_initializer(mean=0.5, stddev=0.1))
 
                 if self.softplus:
+                    #Not really used in this project
                     std = tf.get_variable(name='std_%d' % i, shape=[
-                        1, 2], dtype=tf.float32, initializer=tf.truncated_normal_initializer(mean=0.1, stddev=0.01))
+                        1, self.num_bang_each_p], dtype=tf.float32, initializer=tf.truncated_normal_initializer(mean=0.1, stddev=0.01))
                     std = tf.nn.softplus(std)
                     logstd = tf.log(std)
                 else:
                     logstd = tf.get_variable(name='logstd_%d' % i, shape=[
-                        1, 2], dtype=tf.float32, initializer=tf.constant_initializer([-6, -6]))
+                        1, self.num_bang_each_p], dtype=tf.float32, initializer=tf.constant_initializer([-6, -6]))
                     # hard-code here: constraint the logstd
                     logstd = tf.clip_by_value(logstd, -20., 2.)
                     std = tf.exp(logstd)
@@ -99,8 +104,8 @@ class Reinforce():
                 if self.distribution == 'logit-normal':
                     vec_actions_c = tf.cond(self.is_train,
                                     lambda:  mean + std * tf.random.normal(
-                                        shape=[self.batch_size, 2], mean=0.0, stddev=1.0, dtype=tf.float32),
-                                    lambda:  mean * tf.ones([self.batch_size, 2]))
+                                        shape=[self.batch_size, self.num_bang_each_p], mean=0.0, stddev=1.0, dtype=tf.float32),
+                                    lambda:  mean * tf.ones([self.batch_size, self.num_bang_each_p]))
 
                     vec_logprob_c = - 1 / 2 * tf.math.log(2 * np.pi) - logstd - 0.5 * (
                         vec_actions_c - mean) * (vec_actions_c - mean) / std ** 2
@@ -116,8 +121,8 @@ class Reinforce():
                 else:
                     actions = tf.cond(self.is_train,
                                     lambda:  mean + std * tf.random.normal(
-                                        shape=[self.batch_size, 2], mean=0.0, stddev=1.0, dtype=tf.float32),
-                                    lambda:  mean * tf.ones([self.batch_size, 2]))
+                                        shape=[self.batch_size, self.num_bang_each_p], mean=0.0, stddev=1.0, dtype=tf.float32),
+                                    lambda:  mean * tf.ones([self.batch_size, self.num_bang_each_p]))
 
                     sy_logprob_n = - 1 / 2 * tf.math.log(2 * np.pi) - logstd - 0.5 * (
                         actions - mean) * (actions - mean) / std ** 2
@@ -140,16 +145,16 @@ class Reinforce():
         with tf.variable_scope('policy_network_variables', reuse=reuse):
             for i in range(self.p):
                 mean = tf.get_variable(name='mean_%d' % i, shape=[
-                    1, 2], dtype=tf.float32)
+                    1, self.num_bang_each_p], dtype=tf.float32)
 
                 if self.softplus:
                     std = tf.get_variable(name='std_%d' % i, shape=[
-                        1, 2], dtype=tf.float32, initializer=tf.truncated_normal_initializer(mean=0.1, stddev=0.01))
+                        1, self.num_bang_each_p], dtype=tf.float32, initializer=tf.truncated_normal_initializer(mean=0.1, stddev=0.01))
                     std = tf.nn.softplus(std)
                     logstd = tf.log(std)
                 else:
                     logstd = tf.get_variable(name='logstd_%d' % i, shape=[
-                                             1, 2], dtype=tf.float32, initializer=tf.truncated_normal_initializer(mean=-1.0, stddev=0.1))
+                                             1, self.num_bang_each_p], dtype=tf.float32, initializer=tf.truncated_normal_initializer(mean=-1.0, stddev=0.1))
                     # hard-code here: constraint the logstd
                     logstd = tf.clip_by_value(logstd, -20., 2.)
                     std = tf.exp(logstd)
@@ -187,7 +192,7 @@ class Reinforce():
     def create_variables(self):
         with tf.name_scope("model_inputs"):
             self.state = tf.placeholder(
-                    tf.float32, [None, self.p, 2], name="state")
+                    tf.float32, [None, self.p, self.num_bang_each_p], name="state")
             self.is_train = tf.placeholder(tf.bool, name='istrain')
 
         with tf.name_scope("predict_actions"):

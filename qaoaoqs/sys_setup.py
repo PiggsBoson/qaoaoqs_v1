@@ -223,6 +223,55 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		H1 = H_d.toarray() - 2.0 * H_c.toarray()
 		n_system = 1
 
+	elif test_case == 'iso_4Ham':
+		'''
+		Introducing y terms trying to improve the fidelity
+		'''
+		dyna_type = 'cs'
+		fid_type = 'au'
+		n_b = args.env_dim #number of bath qubits
+		n_system = 1
+
+		if args.cs_coup == 'eq':
+			A = np.ones(n_b)
+		elif args.cs_coup == 'uneq':
+			A = np.random.uniform(1.0, 2.0, n_b) #According to Arenz
+			# A = np.random.normal(1.0, 0.25, n_b)
+		
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
+		# compute Hilbert space basis
+		basis = spin_basis_1d(L = n_b+1)
+
+		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
+		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
+
+		# compute site-coupling lists
+		z_term = [[-Delta[0]/2, i]]
+		if args.bath_Z_terms:
+			z_term += [[-Delta[i]/2, i] for i in range(1,n_b+n_system)]
+		couple_term = [[A[i], 0, i+1] for i in range(n_b)]
+		x_term = [[1.0, 0]]
+		y_term = [[1.0, 0]]
+
+		#operator string lists
+		static_d = [['z', z_term], ['zz', couple_term], 
+					['xx', couple_term], ['yy', couple_term]]
+		static_cX = [['x', x_term]]
+		static_cY = [['y', y_term]]
+
+		#The drifting Hamiltonian
+		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
+		#The control Hamiltonians
+		H_cX = hamiltonian(static_cX, [], basis=basis, dtype=np.complex128)
+		H_cY = hamiltonian(static_cY, [], basis=basis, dtype=np.complex128)
+
+		#QAOA Hamiltonians
+		H0 = H_d.toarray() + 2.0 * H_cX.toarray() + 1.5 * H_cY.toarray()
+		H1 = H_d.toarray() + 2.0 * H_cX.toarray() - 1.5 * H_cY.toarray()
+		H2 = H_d.toarray() - 2.0 * H_cX.toarray() + 1.5 * H_cY.toarray()
+		H3 = H_d.toarray() - 2.0 * H_cX.toarray() - 1.5 * H_cY.toarray()
+
+
 	elif test_case == 'Heis_bbzz':
 		'''
 		Isotropic coupling with bath-bath couplings
@@ -378,6 +427,55 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 			H_S0 =  H_Sd.toarray() + 2.0 * H_c.toarray()
 			H_S1 = H_Sd.toarray() - 2.0 * H_c.toarray()
 
+	elif test_case == 'dp_4Ham':
+		'''
+		Introducing y terms trying to improve the fidelity
+		'''
+		dyna_type = 'cs'
+		fid_type = 'au'
+		n_b = args.env_dim #number of bath qubits
+		n_system = 1
+		if not couplings:
+			if args.cs_coup == 'eq':
+				A = np.ones(n_b)
+				A /= 200
+			elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
+				A = np.random.uniform(0.5, 5, n_b)
+				A /= 1000 #Scale to desired strength
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
+
+		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
+		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
+
+		# compute Hilbert space basis
+		basis = spin_basis_1d(L = n_b+1)
+		
+		# compute site-coupling lists
+		z_term = [[-Delta[0]/2, i]]
+		if args.bath_Z_terms:
+			z_term += [[-Delta[i]/2, i] for i in range(1,n_b+n_system)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
+		x_term = [[1.0, 0]]
+		y_term = [[1.0, 0]]
+
+		#operator string lists
+		static_d = [['z', z_term], 
+					['-+', couple_term], ['+-', couple_term]]
+		static_cX = [['x', x_term]]
+		static_cY = [['y', y_term]]
+
+		#The drifting Hamiltonian
+		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
+		#The control Hamiltonians
+		H_cX = hamiltonian(static_cX, [], basis=basis, dtype=np.complex128)
+		H_cY = hamiltonian(static_cY, [], basis=basis, dtype=np.complex128)
+
+		#QAOA Hamiltonians
+		H0 = H_d.toarray() + 2.0 * H_cX.toarray() + 1.5 * H_cY.toarray()
+		H1 = H_d.toarray() + 2.0 * H_cX.toarray() - 1.5 * H_cY.toarray()
+		H2 = H_d.toarray() - 2.0 * H_cX.toarray() + 1.5 * H_cY.toarray()
+		H3 = H_d.toarray() - 2.0 * H_cX.toarray() - 1.5 * H_cY.toarray()
+		
 	elif test_case == 'TLS_bb':
 		'''
 		TLS-TLS coupling zz
@@ -1330,6 +1428,8 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 						couplings = A, lind_L = L, n_s = n_system, n_b = n_b)
 	elif interaction_pic:
 		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args, n_s = n_system, n_b = n_b, couplings = A, H_B = H_B, H_int = H_int, H_S0 = H_S0, H_S1 = H_S1)
+	elif test_case in {'iso_4Ham','dp_4Ham'}:
+		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args, n_s = n_system, n_b = n_b, couplings = A,H2=H2, H3=H3)
 	else:
 		quma = QuManager(psi0_input, psi1_input, H0, H1, dyna_type, fid_type, args, n_s = n_system, n_b = n_b, couplings = A)
 	

@@ -122,8 +122,9 @@ def parse_args():
 						default=1-1e-9, help='Target fidelity')
 	qc_arg.add_argument('--protocol_renormal', type=bool,
 						default=False, help='Whether renormalizing the protocol in computing the fidelity')
-	qc_arg.add_argument('--bath_Z_terms', type=bool,
-						default=False, help='Whether to have bath Z terms (lab frame)')
+	qc_arg.add_argument('--bath_Z_terms', action='store_true')
+	qc_arg.add_argument('--no-bath_Z_terms', dest='bath_Z_terms', action='store_false')
+	qc_arg.set_defaults(bath_Z_terms=False)#Whether to have bath Z terms (lab frame)
 
 	
 

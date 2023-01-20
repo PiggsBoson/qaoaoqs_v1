@@ -65,7 +65,7 @@ def parse_args():
 	qc_arg.add_argument('--p', type=int,
 						default=10, help='Numbers of bangs')
 	qc_arg.add_argument('--approach', choices=['qaoa', 'blackbox', 'pg', 'es',
-											   'brs', 'ars', 'scp'], default='pg', help='different approachs to the problem')
+											   'brs', 'ars', 'scp','grape'], default='pg', help='different approachs to the problem')
 	qc_arg.add_argument('--qaoa_method', choices=['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'Newton-CG', 'L-BFGS-B', 'TNC', 'COBYLA', 'SLSQP', 'trust-constr',
 												  'dogleg', 'trust-ncg', 'trust-exact', 'trust-krylov'], default='trust-constr', help='optimization method for the scipy optimize')
 	#Physical parameters
@@ -75,7 +75,8 @@ def parse_args():
 						'Lloyd_2qb', 'Lloyd_3qb', 'Lloyd_var1',
 						'TLS_bb', 'Heis_bbzz', 'TLSsec_bath', 'TLSsec_bath_lowStr', 'Koch_1qb',
 						'Koch_paper_1qb_noLind', 'Koch_paper_1qb', 'TLSsec_bath_2qb',
-						'1qb1anci','iso_4Ham','dp_4Ham'],
+						'1qb1anci','iso_4Ham','dp_4Ham',
+						'grape_TLS'],
 						default='cs_au', help='different test case for the problem')
 	qc_arg.add_argument('--env_dim', type=int, default=0,
 						help='number of bath spins in central spin model')
@@ -168,8 +169,7 @@ def train(seed, exp_dir):
 			exp_dir)
 	os.makedirs(exp_dir, exist_ok=True)
 	
-
-	quma = sys_setup.setup(args) #Set up physical parameters of the system
+	
 
 	###############################################
 
@@ -178,8 +178,10 @@ def train(seed, exp_dir):
 	np.random.seed(seed)
 	params = vars(args)
 	params['seed'] = seed
-	params['couplings'] = quma.couplings.tolist()
 	###############################################
+	if args.approach != 'grape':
+		quma = sys_setup.setup(args) #Set up physical parameters of the system
+		params['couplings'] = quma.couplings.tolist()
 
 
 	logger = setup_logger('train', os.path.join(exp_dir, "train.log"))
@@ -493,6 +495,23 @@ def train(seed, exp_dir):
 		print('Protocol: ', protocol_opt)
 		print('Fidelity: ', fid_opt)
 		print('==='*10)
+	
+	elif args.approach == 'grape':
+		"""
+		Doing GRAPE based on the result of Hamiltonian switching. 
+		The optimal protocol of Hamiltonian switching and coupling strengths are stored 
+		in switching_result.yaml.
+		"""
+		import yaml
+		with open('switching_result.yaml', 'r') as f:
+			config = yaml.load(f, yaml.FullLoader)
+			print(json.dumps(config, indent=1), flush=True)
+		if args.T_tot!= config['T_tot']:
+			raise Exception("Prameters inconsistency!")
+		quma = sys_setup.setup(args, couplings=config['couplings'])
+		params['couplings'] = quma.couplings.tolist()
+		GRAPE_result = quma.run_GRAPE(config['protocol'])
+		print(GRAPE_result)
 
 
 def main():

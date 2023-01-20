@@ -342,11 +342,6 @@ def get_datasets(fpath, args = None) -> Result:
 			result.state_fid(args.temp, args.state_samples)
 		elif args.option == 'GRK':
 			result.GRK_fidelity(args.temp)
-		elif args.option == 'call':
-			method = getattr(result,args.func_n)
-			print(method())
-		elif  args.option == 'display_data':
-			print(result.data.to_string())
 		
 		if args.x == 'cp_str':
 			result.fid_stat()
@@ -371,6 +366,7 @@ def main():
 	# parser.add_argument('--comparision', type=bool, default=False)
 	parser.add_argument('--title',type=str, default=None)
 	parser.add_argument('--option',choices=['plot', 'state_fid', 'comparison', 'plot_ab','plot_his','ani_his', 'Bapat_n','Bapat_p', 'GRK', 'grad', 'call','display_data'],default='plot')
+	parser.add_argument('--data_entry', nargs='*')
 	parser.add_argument('--func_n',help='function name to call in the result class')
 	parser.add_argument('--temp',choices=['zero', 'inf', 'rand'],default='zero', help='temperature')
 	parser.add_argument('--state_samples', type = int, default=100)
@@ -384,7 +380,18 @@ def main():
 	
 	for logdir in args.logdir:
 		result = get_datasets(logdir, args)
-		# results.append(result)
+		if args.option == 'grad':
+			grad,heis = result.compute_grad()
+			print("The gradient is :", grad)
+			ev, _ = np.linalg.eig(heis)
+			print("The eigenvalues of the Hessian is", ev)
+		elif args.option == 'call':
+			method = getattr(result,args.func_n)
+			print(method())
+		elif  args.option == 'display_data':
+			for e in args.data_entry:
+				print(e, result.data[e].to_numpy()[0])
+			print(sum(result.data['duration'][3][0]))
 		data=data.append(result.data, ignore_index=True)
 	
 	data.rename(columns={"env_dim": "n"}, inplace = True) #For better readability
@@ -401,12 +408,6 @@ def main():
 		plot_Bapat_n(data, args)
 	elif args.option == 'Bapat_p':
 		plot_Bapat_p(data, args)
-	elif args.option == 'grad':
-		ev1, _ = np.linalg.eig([[1,1],[1,1]])
-		grad,heis = result.compute_grad()
-		print("The gradient is :", grad)
-		ev, _ = np.linalg.eig(heis)
-		print("The eigenvalues of the Hessian is", ev)
 	elif args.option == 'plot':
 		plot_data(data, args)
 

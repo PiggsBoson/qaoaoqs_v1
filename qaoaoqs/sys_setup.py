@@ -2,6 +2,8 @@ from qaoaoqs.quantum_manager import *
 from quspin.basis import spin_basis_1d
 from quspin.operators import hamiltonian
 
+import qutip as qt
+
 sigma_x = np.array([[0.0, 1.0], [1.0, 0.0]])
 sigma_z = np.array([[1.0, 0.0], [0.0, -1.0]])
 sigma_y = 1.0j * np.array([[0.0, - 1.0], [1.0, 0.0]])
@@ -427,6 +429,54 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 			H_S0 =  H_Sd.toarray() + 2.0 * H_c.toarray()
 			H_S1 = H_Sd.toarray() - 2.0 * H_c.toarray()
 
+	elif test_case == 'grape_TLS':
+		n_b = args.env_dim #number of bath qubits
+		n_system = 1
+		n_tot=n_b+n_system
+		if not couplings:
+			raise Exception("Only used for secondary optimization for now")
+			# if args.cs_coup == 'eq':
+			# 	A = np.ones(n_b)
+			# 	A /= 200
+			# elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
+			# 	A = np.random.uniform(0.5, 5, n_b)
+			# 	A /= 1000 #Scale to desired strength
+			# A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
+		else:
+			A=couplings
+		Delta = np.linspace(1.0,1.0+0.1*(n_b-1), num=n_b) #TLS frequencies
+		Delta = np.insert(Delta, 0, 1.0) #Insert the qubit frequency
+
+		# compute Hilbert space basis
+		basis = spin_basis_1d(L = n_tot)
+		
+		# compute site-coupling lists
+		z_term = [[-Delta[i]/2, i] for i in range(n_tot)]
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
+		x_term = [[1.0, 0]]
+
+		#operator string lists
+		static_d = [['z', z_term], 
+					['-+', couple_term], ['+-', couple_term]]
+		static_c = [['x', x_term]]
+
+		#The drifting Hamiltonian
+		H_d_np= hamiltonian(static_d, [], basis=basis, dtype=np.complex128).toarray()
+		#The control Hamiltonian
+		H_c_np = hamiltonian(static_c, [], basis=basis, dtype=np.complex128).toarray() 
+
+		#drifting and control Hamiltonians
+		H_d = qt.Qobj(H_d_np, dims=[[2]*n_tot, [2]*n_tot])
+		H_c = 2*qt.Qobj(H_c_np, dims=[[2]*n_tot, [2]*n_tot])
+
+		psi1 =   qt.Qobj(target_uni(args.au_uni), dims=[[2],[2]])
+			
+		psi0 = qt.identity(2**n_tot)
+
+		quma = QuManager(psi0, psi1, H_d=H_d,H_c=H_c, args=args, n_s = n_system, n_b = n_b, couplings = A)
+
+		return quma
+		
 	elif test_case == 'dp_4Ham':
 		'''
 		Introducing y terms trying to improve the fidelity

@@ -12,7 +12,7 @@ sigma_y = 1.0j * np.array([[0.0, -1.0], [1.0, 0.0]])
 
 class QuManager():
 	# quantum env for the agent
-	def __init__(self, psi0, psi1, H0, H1, dyna_type, fid_type, args = None, couplings = None, **kwargs):
+	def __init__(self, psi0, psi1, H0=None, H1=None, dyna_type="", fid_type="", args = None, couplings = None, **kwargs):
 		"""quantum environment for the RL agents 
 
 		Arguments:
@@ -85,6 +85,10 @@ class QuManager():
 			
 			if hasattr(args,'ode_steps'):
 				self.ode_steps = args.ode_steps
+
+			if args.approach == 'grape':
+				self.H_d = kwargs.get('H_d', None)
+				self.H_c = kwargs.get('H_c', None)
 
 		else:
 		#enables convenient implementation, especially for testing
@@ -222,6 +226,14 @@ class QuManager():
 			# if np.sum(protocol) >= 1:
 			result -= np.log(np.sum(protocol))
 		return result
+
+	def run_GRAPE(self, protocol):
+		if self.renormal: 
+			#checked: pass by value here. Will not afffect the value of the protocol
+			protocol /= np.sum(protocol)
+			protocol *= self.T_tot
+
+		return qt.optimize_pulse(self.H_d, [self.H_c], self.psi0, self.psi1, tau=protocol, amp_lbound=-1.2, amp_ubound=1.2, fid_err_targ=1e-15, min_grad=1e-10, max_iter=2, max_wall_time=180, alg='GRAPE', alg_params=None, optim_params=None, optim_method='DEF', method_params=None, dyn_type='UNIT', dyn_params=None, prop_type='DEF', prop_params=None, fid_type='BIPARTITE', fid_params=None,init_pulse_type='BANG', log_level=0, out_file_ext=None, gen_stats=False)
 
 	def state_fidelity(self, protocol):
 		"""Get the fidelity with a given initial state a target state only for the system. The initial and final states are all density matricies.

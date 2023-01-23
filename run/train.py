@@ -4,7 +4,7 @@ import numpy as np
 import scipy.linalg as la
 import scipy as sp
 import scipy.optimize as opt
-import tensorflow as tf
+# import tensorflow as tf
 
 from qaoaoqs.reinforce import Reinforce
 from qaoaoqs.quantum_manager import *
@@ -174,7 +174,7 @@ def train(seed, exp_dir):
 	###############################################
 
 	# Set random seeds
-	tf.set_random_seed(seed)
+	# tf.set_random_seed(seed)
 	np.random.seed(seed)
 	params = vars(args)
 	params['seed'] = seed
@@ -356,101 +356,102 @@ def train(seed, exp_dir):
 
 	elif args.approach == 'pg':
 		# control memory for gpu
-		config = tf.ConfigProto()
-		config.gpu_options.allow_growth = True
-		sess = tf.Session(config=config)
-		global_step = tf.Variable(0, trainable=False)
+		# config = tf.ConfigProto()
+		# config.gpu_options.allow_growth = True
+		# sess = tf.Session(config=config)
+		# global_step = tf.Variable(0, trainable=False)
 
-		# no learning rate decay
-		learning_rate = args.learning_rate
-		if args.lr_decay:
-			learning_rate = tf.train.exponential_decay(learning_rate, global_step,
-													   args.decay_steps, 0.96, staircase=True)
+		# # no learning rate decay
+		# learning_rate = args.learning_rate
+		# if args.lr_decay:
+		# 	learning_rate = tf.train.exponential_decay(learning_rate, global_step,
+		# 											   args.decay_steps, 0.96, staircase=True)
 
-		# optimizer
-		if args.optimizer == 'adam':
-			optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-		elif args.optimizer == 'sgd':
-			optimizer = tf.train.GradientDescentOptimizer(
-				learning_rate=learning_rate)
-		elif args.optimizer == 'rms':
-			optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
-		else:
-			raise Exception(
-				'Optimizer {} is unknown, please choose from the valid categories'.format(args.optimizer))
+		# # optimizer
+		# if args.optimizer == 'adam':
+		# 	optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+		# elif args.optimizer == 'sgd':
+		# 	optimizer = tf.train.GradientDescentOptimizer(
+		# 		learning_rate=learning_rate)
+		# elif args.optimizer == 'rms':
+		# 	optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
+		# else:
+		# 	raise Exception(
+		# 		'Optimizer {} is unknown, please choose from the valid categories'.format(args.optimizer))
 
-		model_name = exp_dir + '/controller.ckpt'
+		# model_name = exp_dir + '/controller.ckpt'
 
-		init_val = np.random.randn(args.p)
-		init_val = np.expand_dims(init_val, axis=0)
+		# init_val = np.random.randn(args.p)
+		# init_val = np.expand_dims(init_val, axis=0)
 
-		reinforce = Reinforce(sess, init_val, optimizer, global_step, args)
+		# reinforce = Reinforce(sess, init_val, optimizer, global_step, args)
 
-		saver = tf.train.Saver()
+		# saver = tf.train.Saver()
 
-		history_best_protocol = None
-		history_best_fid = 0.
+		# history_best_protocol = None
+		# history_best_fid = 0.
 
-		if args.loadmodel_dir:
-			saver.restore(sess,  args.loadmodel_dir + '/controller.ckpt')
+		# if args.loadmodel_dir:
+		# 	saver.restore(sess,  args.loadmodel_dir + '/controller.ckpt')
 
-		t = trange(args.num_iters, desc='Reward')
-		for iter_i in t:
-			# take action
+		# t = trange(args.num_iters, desc='Reward')
+		# for iter_i in t:
+		# 	# take action
 
-			action = reinforce.get_action(is_train=True)
-			action_flat = np.reshape(action, [args.batch_size, -1])
+		# 	action = reinforce.get_action(is_train=True)
+		# 	action_flat = np.reshape(action, [args.batch_size, -1])
 
-			reward = Parallel(n_jobs=num_cpus)(
-				delayed(quma.get_reward)(i) for i in action_flat)
+		# 	reward = Parallel(n_jobs=num_cpus)(
+		# 		delayed(quma.get_reward)(i) for i in action_flat)
 
 			
-			max_ind = np.argmax(reward)
-			if reward[max_ind] > history_best_fid:
-				history_best_protocol = action[max_ind]
-				history_best_fid = reward[max_ind]
+		# 	max_ind = np.argmax(reward)
+		# 	if reward[max_ind] > history_best_fid:
+		# 		history_best_protocol = action[max_ind]
+		# 		history_best_fid = reward[max_ind]
 
-				save_path = saver.save(sess, model_name)
-				print("Model saved in path: %s" % (save_path))
+		# 		save_path = saver.save(sess, model_name)
+		# 		print("Model saved in path: %s" % (save_path))
 
-				print('==='*10)
-				print('History Best: ')
-				print('Protocol: ', history_best_protocol)
-				print('Fidelity: ', history_best_fid)
-				print('==='*10)
+		# 		print('==='*10)
+		# 		print('History Best: ')
+		# 		print('Protocol: ', history_best_protocol)
+		# 		print('Fidelity: ', history_best_fid)
+		# 		print('==='*10)
 
-			# In our sample action is equal to state
-			state = action
+		# 	# In our sample action is equal to state
+		# 	state = action
 
-			# testing
-			test_action = reinforce.get_action(is_train=False)
+		# 	# testing
+		# 	test_action = reinforce.get_action(is_train=False)
 
-			test_action = test_action[0]
-			test_action_new = np.reshape(test_action, [-1])
+		# 	test_action = test_action[0]
+		# 	test_action_new = np.reshape(test_action, [-1])
 
-			test_reward = quma.get_reward(test_action_new)
+		# 	test_reward = quma.get_reward(test_action_new)
 
-			print('Testing ... ')
-			print('Test protocol: ', test_action_new)
-			print('Fidelity: ', test_reward)
+		# 	print('Testing ... ')
+		# 	print('Test protocol: ', test_action_new)
+		# 	print('Fidelity: ', test_reward)
 
-			logger_protocol.info('iter: {}, protocol duration: {}, fid: {}'.format(
-				iter_i, test_action_new, test_reward))
+		# 	logger_protocol.info('iter: {}, protocol duration: {}, fid: {}'.format(
+		# 		iter_i, test_action_new, test_reward))
 
-			# train and update the policy
-			ls, ent = reinforce.train_step(state, reward)
+		# 	# train and update the policy
+		# 	ls, ent = reinforce.train_step(state, reward)
 
 
-			logger.info("iter: {}, loss: {}, mean_reward: {}, max_reward: {}, test_reward: {}, his_reward: {}, entropy: {}".
-						format(iter_i, ls, np.mean(reward), np.max(reward), test_reward, history_best_fid, ent))
+		# 	logger.info("iter: {}, loss: {}, mean_reward: {}, max_reward: {}, test_reward: {}, his_reward: {}, entropy: {}".
+		# 				format(iter_i, ls, np.mean(reward), np.max(reward), test_reward, history_best_fid, ent))
 
-			t.set_description('Reward: %g' % np.mean(reward))
+		# 	t.set_description('Reward: %g' % np.mean(reward))
 
-		print('==='*10)
-		print('History Best: ')
-		print('Protocol: ', history_best_protocol)
-		print('Fidelity: ', history_best_fid)
-		print('==='*10)
+		# print('==='*10)
+		# print('History Best: ')
+		# print('Protocol: ', history_best_protocol)
+		# print('Fidelity: ', history_best_fid)
+		# print('==='*10)
+		pass
 
 	elif args.approach == 'scp':
 
@@ -503,15 +504,25 @@ def train(seed, exp_dir):
 		in switching_result.yaml.
 		"""
 		import yaml
-		with open('switching_result.yaml', 'r') as f:
+		with open('run/switching_result.yaml', 'r') as f:
 			config = yaml.load(f, yaml.FullLoader)
 			print(json.dumps(config, indent=1), flush=True)
 		if args.T_tot!= config['T_tot']:
 			raise Exception("Prameters inconsistency!")
-		quma = sys_setup.setup(args, couplings=config['couplings'])
-		params['couplings'] = quma.couplings.tolist()
-		GRAPE_result = quma.run_GRAPE(config['protocol'])
-		print(GRAPE_result)
+		
+
+
+		quma_GRAPE = sys_setup.setup(args, couplings=config['couplings'])
+		GRAPE_result = quma_GRAPE.get_GRAPE_optimizer(config['protocol'])
+		print(GRAPE_result.termination_reason)
+		print("Initial MLI is ",-np.log10(GRAPE_result.initial_fid_err))
+		print("Final fidelity is ",GRAPE_result.fidelity)
+		print("Final MLI is ",-np.log10(GRAPE_result.fid_err))
+		print(GRAPE_result.num_iter)
+
+		args.testcase = 'XmonTLS'
+		quma_bang = sys_setup.setup(args, couplings=config['couplings'])
+		print("The MLI from Hamiltonian Switching is", 1 - quma_bang.get_reward(config['protocol']))
 
 
 def main():

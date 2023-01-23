@@ -233,7 +233,7 @@ class QuManager():
 			#checked: pass by value here. Will not afffect the value of the protocol
 			protocol /= np.sum(protocol)
 			protocol *= self.T_tot
-		return cpo.optimize_pulse(self.H_d, [self.H_c], self.psi0, self.psi1, tau=protocol, amp_lbound=-1.2, amp_ubound=1.2, fid_err_targ=1e-15, min_grad=1e-10, max_iter=20, max_wall_time=180, alg='GRAPE', alg_params=None, optim_params=None, optim_method='FMIN_L_BFGS_B', method_params=None, dyn_type='UNIT', dyn_params=None, prop_type='DEF', prop_params=None, fid_type='BIPARTITE', fid_params=None,init_pulse_type='BANG', log_level=0, gen_stats=False)
+		return cpo.optimize_pulse(self.H_d, [self.H_c], self.psi0, self.psi1, tau=protocol, amp_lbound=-1.2, amp_ubound=1.2, fid_err_targ=1e-15, min_grad=1e-13, max_iter=500, max_wall_time=180, alg='GRAPE', alg_params=None, optim_params=None, optim_method='FMIN_BFGS', method_params=None, dyn_type='UNIT', dyn_params=None, prop_type='DEF', prop_params=None, fid_type='BIPARTITE', fid_params=None,init_pulse_type='BANG', log_level=0, gen_stats=False)
 
 	def state_fidelity(self, protocol):
 		"""Get the fidelity with a given initial state a target state only for the system. The initial and final states are all density matricies.

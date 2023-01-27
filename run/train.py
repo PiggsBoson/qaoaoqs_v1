@@ -512,11 +512,10 @@ def train(seed, exp_dir):
 		
 
 		quma_GRAPE = sys_setup.setup(args, couplings=config[args.exp_name]['couplings'])
-		GRAPE_result = quma_GRAPE.get_GRAPE_optimizer(config[args.exp_name]['protocol'])
+		GRAPE_result = quma_GRAPE.get_GRAPE_optimizer(config[args.exp_name]['protocol'], max_iter = args.num_iters)
 		print(GRAPE_result.termination_reason)
 		print("Initial MLI is ",-np.log10(GRAPE_result.initial_fid_err))
 		print("Initial pulses are", GRAPE_result.initial_amps.T)
-		print("Final fidelity is ",GRAPE_result.fidelity)
 		print("Final MLI is ",-np.log10(GRAPE_result.fid_err))
 		print("Final pulses are", GRAPE_result.final_amps.T)
 		print("Number of iterations is ",GRAPE_result.num_iter)

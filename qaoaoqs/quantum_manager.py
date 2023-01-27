@@ -227,13 +227,13 @@ class QuManager():
 			result -= np.log(np.sum(protocol))
 		return result
 
-	def get_GRAPE_optimizer(self, protocol):
+	def get_GRAPE_optimizer(self, protocol, amp_bound=1.2, max_iter = 500,optim_method = 'FMIN_BFGS'):
 		import qutip.control.pulseoptim as cpo
 		if self.renormal: 
 			#checked: pass by value here. Will not afffect the value of the protocol
 			protocol /= np.sum(protocol)
 			protocol *= self.T_tot
-		return cpo.optimize_pulse(self.H_d, [self.H_c], self.psi0, self.psi1, tau=protocol, amp_lbound=-1.2, amp_ubound=1.2, fid_err_targ=1e-15, min_grad=1e-13, max_iter=500, max_wall_time=180, alg='GRAPE', alg_params=None, optim_params=None, optim_method='FMIN_BFGS', method_params=None, dyn_type='UNIT', dyn_params=None, prop_type='DEF', prop_params=None, fid_type='BIPARTITE', fid_params=None,init_pulse_type='BANG', log_level=0, gen_stats=False)
+		return cpo.optimize_pulse(self.H_d, [self.H_c], self.psi0, self.psi1, tau=protocol, amp_lbound=-amp_bound, amp_ubound=amp_bound, fid_err_targ=1e-15, min_grad=1e-13, max_iter=max_iter, max_wall_time=180, alg='GRAPE', optim_method= optim_method, dyn_type='UNIT',prop_type='DEF',fid_type='BIPARTITE', init_pulse_type='BANG', log_level=0, gen_stats=False)
 
 	def state_fidelity(self, protocol):
 		"""Get the fidelity with a given initial state a target state only for the system. The initial and final states are all density matricies.

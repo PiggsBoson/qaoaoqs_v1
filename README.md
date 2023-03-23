@@ -1,7 +1,7 @@
 # Error Mitigation with Bipartite Hamiltonian Switching Control
 This package is for simulating the control of qubits coupled to coherent and dissapative noise using a Hamiltonian switching ansatz inspired by the quantum approximate optimization algorithm (QAOA).
 
-This fork is only for secondary optimization with GRAPE. As the version of qutip used requires a numpy version that is not compatible with TensorFolow1, which is used for the policy gradient part. The modified qutip for the use of this work is in https://github.com/PiggsBoson/qutip
+This branch is only for secondary optimization with GRAPE. As the version of qutip used requires a numpy version that is not compatible with TensorFolow1, which is used for the policy gradient part. The modified qutip for the use of this work is in https://github.com/PiggsBoson/qutip
 
 To setup, 
 ```

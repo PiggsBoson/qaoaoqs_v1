@@ -310,7 +310,7 @@ def get_datasets(fpath, args = None) -> Result:
 	ns_params = Namespace(**params)
 	
 	result = Result(fpath, datasets, ns_params)
-	if datasets["testcase"].values[0] in {"XmonTLS", 'TLSsec_bath_lowStr', 'Koch_1qb','TLSsec_bath', 'Lloyd_var1', 'TLSsec_bath_2qb'}:
+	if datasets["testcase"].values[0] in {"XmonTLS", 'TLSsec_bath_lowStr', 'Koch_1qb','TLSsec_bath', 'Lloyd_var1', 'TLSsec_bath_2qb', 'TLS_bb','1qb1anci'}:
 		#Use physical timescale
 		result.transmon_time(8)
 	elif datasets["testcase"].values[0] in {'Koch_paper_1qb_noLind', 'Koch_paper_1qb'}:
@@ -408,7 +408,7 @@ def main():
 		plot_Bapat_n(data, args)
 	elif args.option == 'Bapat_p':
 		plot_Bapat_p(data, args)
-	elif args.option == 'plot':
+	else:
 		plot_data(data, args)
 
 

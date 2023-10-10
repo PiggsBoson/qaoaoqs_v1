@@ -503,15 +503,25 @@ def train(seed, exp_dir):
 		in switching_result.yaml.
 		"""
 		import yaml
-		with open('switching_result.yaml', 'r') as f:
+		with open('run/switching_result.yaml', 'r') as f:
 			config = yaml.load(f, yaml.FullLoader)
 			print(json.dumps(config, indent=1), flush=True)
 		if args.T_tot!= config['T_tot']:
 			raise Exception("Prameters inconsistency!")
-		quma = sys_setup.setup(args, couplings=config['couplings'])
-		params['couplings'] = quma.couplings.tolist()
-		GRAPE_result = quma.run_GRAPE(config['protocol'])
-		print(GRAPE_result)
+		
+
+
+		quma_GRAPE = sys_setup.setup(args, couplings=config['couplings'])
+		GRAPE_result = quma_GRAPE.get_GRAPE_optimizer(config['protocol'])
+		print(GRAPE_result.termination_reason)
+		print("Initial MLI is ",-np.log10(GRAPE_result.initial_fid_err))
+		print("Final fidelity is ",GRAPE_result.fidelity)
+		print("Final MLI is ",-np.log10(GRAPE_result.fid_err))
+		print(GRAPE_result.num_iter)
+
+		args.testcase = 'XmonTLS'
+		quma_bang = sys_setup.setup(args, couplings=config['couplings'])
+		print("The MLI from Hamiltonian Switching is", 1 - quma_bang.get_reward(config['protocol']))
 
 
 def main():

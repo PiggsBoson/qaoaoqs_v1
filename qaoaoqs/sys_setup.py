@@ -410,9 +410,9 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		static_c = [['x', x_term]]
 
 		#The drifting Hamiltonian
-		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
+		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128,check_symm=False)
 		#The control Hamiltonian
-		H_c = hamiltonian(static_c, [], basis=basis, dtype=np.complex128)
+		H_c = hamiltonian(static_c, [], basis=basis, dtype=np.complex128,check_symm=False)
 
 		#QAOA Hamiltonians
 		H0 = H_d.toarray() + 2.0 * H_c.toarray()
@@ -497,9 +497,9 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 		static_c = [['x', x_term]]
 
 		#The drifting Hamiltonian
-		H_d_np= hamiltonian(static_d, [], basis=basis, dtype=np.complex128).toarray()
+		H_d_np= hamiltonian(static_d, [], basis=basis, dtype=np.complex128,check_symm=False).toarray()
 		#The control Hamiltonian
-		H_c_np = hamiltonian(static_c, [], basis=basis, dtype=np.complex128).toarray() 
+		H_c_np = hamiltonian(static_c, [], basis=basis, dtype=np.complex128,check_symm=False).toarray() 
 
 		#drifting and control Hamiltonians
 		H_d = qt.Qobj(H_d_np, dims=[[2]*n_tot, [2]*n_tot])

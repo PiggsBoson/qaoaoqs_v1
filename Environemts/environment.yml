@@ -1,4 +1,4 @@
-name: qrl
+name: hsctrl
 channels:
   - weinbe58
   - conda-forge

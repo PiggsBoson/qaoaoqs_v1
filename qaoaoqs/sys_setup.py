@@ -429,6 +429,42 @@ def setup(args, if_no_bath = False, couplings = None, alt_testcase = None, inter
 			H_S0 =  H_Sd.toarray() + 2.0 * H_c.toarray()
 			H_S1 = H_Sd.toarray() - 2.0 * H_c.toarray()
 
+	elif test_case == 'XmonTLS_weak_drive':
+		''' This is done in the interaction frame, assuming the qubit frequency and
+		all TLS frequencies are equal.'''
+		dyna_type = 'cs'
+		fid_type = 'au'
+		n_b = args.env_dim #number of bath qubits
+		if not couplings:
+			if args.cs_coup == 'eq':
+				A = np.ones(n_b)
+				A /= 200
+			elif args.cs_coup == 'uneq': #Only consider unequal case, which is the case of real systems
+				A = np.random.uniform(0.5, 5, n_b)
+				A /= 1000 #Scale to desired strength
+		A *= args.cs_coup_scale if hasattr(args,'cs_coup_scale') else 1.0
+
+		# compute Hilbert space basis
+		basis = spin_basis_1d(L = n_b+1)
+		
+		# compute site-coupling lists
+		couple_term = [[A[i]/2, 0, i+1] for i in range(n_b)]
+		x_term = [[1.0, 0]]
+
+		#operator string lists
+		static_d = [['-+', couple_term], ['+-', couple_term]]
+		static_c = [['x', x_term]]
+
+		#The drifting Hamiltonian
+		H_d = hamiltonian(static_d, [], basis=basis, dtype=np.complex128)
+		#The control Hamiltonian
+		H_c = hamiltonian(static_c, [], basis=basis, dtype=np.complex128)
+
+		#QAOA Hamiltonians
+		H0 = H_d.toarray() + 0.015 * H_c.toarray()
+		H1 = H_d.toarray() - 0.015 * H_c.toarray()
+		n_system = 1
+
 	elif test_case == 'grape_TLS':
 		n_b = args.env_dim #number of bath qubits
 		n_system = 1

@@ -10,11 +10,8 @@
 import numpy as np
 import scipy.linalg as la
 from os import path
-import sys
-from scipy.integrate import solve_ivp
 from scipy.integrate import ode
 import qutip as qt
-from scipy.special import comb
 
 class Dyna():
 

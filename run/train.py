@@ -70,7 +70,9 @@ def parse_args():
 												  'dogleg', 'trust-ncg', 'trust-exact', 'trust-krylov'], default='trust-constr', help='optimization method for the scipy optimize')
 	#Physical parameters
 	qc_arg.add_argument('--testcase', choices=['lind', 'cs_au', 'ns_cs', 'ns_lind', 'Heis_lab',
-						'dipole', 'XmonTLS', 'Xmon_nb','NoBath','dipole_VarStr', 'dipole_VarStr_lab', 'XmonTLS_weak_drive',
+						'dipole', 'XmonTLS', 'Xmon_nb','NoBath',
+						'dipole_VarStr', 'dipole_VarStr_lab', 
+						'XmonTLS_weak_drive', "XmonTLS_weak_drive_v1",
 						'2qbiSWAP', '2qbCPHASE', 'XXnYY', 'XXpm', 'XXYY_X', 
 						'Lloyd_2qb', 'Lloyd_3qb', 'Lloyd_var1',
 						'TLS_bb', 'Heis_bbzz', 'TLSsec_bath', 'TLSsec_bath_lowStr', 'Koch_1qb',
